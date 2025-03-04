@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -122,7 +121,6 @@ const StoryViewer = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["storyComments", stories?.[currentStoryIndex]?.id] });
-      toast.success("Comentário excluído com sucesso!");
     },
     onError: (error) => {
       console.error("Erro ao excluir comentário:", error);
@@ -228,8 +226,6 @@ const StoryViewer = () => {
       setHasLiked(!hasLiked);
       setLikesCount(prev => data?.action === 'like' ? prev + 1 : prev - 1);
       
-      toast.success(data?.action === 'like' ? "Story curtido!" : "Curtida removida");
-      
       queryClient.invalidateQueries({ queryKey: ["storyLikes", storyId] });
     },
     onError: (error) => {
@@ -259,7 +255,6 @@ const StoryViewer = () => {
     onSuccess: () => {
       setCommentText("");
       queryClient.invalidateQueries({ queryKey: ["storyComments", stories?.[currentStoryIndex]?.id] });
-      toast.success("Comentário adicionado!");
     },
     onError: (error) => {
       console.error("Erro ao adicionar comentário:", error);
