@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, ChevronLeft, ChevronRight, Trash2, Send, MessageSquare, Heart } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Trash2, Send, MessageSquare, Heart, MoreVertical } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -106,6 +107,34 @@ const StoryViewer = () => {
     },
     enabled: !!stories && stories.length > 0 && currentStoryIndex < stories.length,
   });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from("story_comments")
+        .delete()
+        .eq("id", commentId)
+        .eq("user_id", currentUser?.id);
+
+      if (error) throw error;
+      
+      return commentId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["storyComments", stories?.[currentStoryIndex]?.id] });
+      toast.success("Comentário excluído com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao excluir comentário:", error);
+      toast.error("Erro ao excluir comentário");
+    }
+  });
+
+  const handleDeleteComment = (commentId: string) => {
+    if (confirm("Tem certeza que deseja excluir este comentário?")) {
+      deleteCommentMutation.mutate(commentId);
+    }
+  };
 
   const checkUserLike = async (storyId: string) => {
     if (!currentUser || !storyId) return;
@@ -540,9 +569,21 @@ const StoryViewer = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 flex-1">
-                      <p className="text-black dark:text-white text-sm font-medium">
-                        {comment.profiles?.username || "Usuário"}
-                      </p>
+                      <div className="flex justify-between items-center">
+                        <p className="text-black dark:text-white text-sm font-medium">
+                          {comment.profiles?.username || "Usuário"}
+                        </p>
+                        {currentUser && comment.user_id === currentUser.id && (
+                          <Button 
+                            onClick={() => handleDeleteComment(comment.id)}
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                       <p className="text-gray-800 dark:text-gray-200 text-sm mt-1">{comment.text}</p>
                     </div>
                   </div>
