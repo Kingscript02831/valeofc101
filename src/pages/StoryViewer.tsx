@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, TouchEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -46,6 +46,11 @@ const StoryViewer = () => {
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
+  
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
@@ -54,6 +59,22 @@ const StoryViewer = () => {
       if (!user) return null;
       
       return user;
+    },
+  });
+
+  const { data: usersWithStories } = useQuery({
+    queryKey: ["usersWithStories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stories")
+        .select("user_id")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at");
+
+      if (error) throw error;
+      
+      const uniqueUserIds = Array.from(new Set(data.map((story: any) => story.user_id)));
+      return uniqueUserIds;
     },
   });
 
@@ -375,6 +396,32 @@ const StoryViewer = () => {
     if (currentStoryIndex < stories.length - 1) {
       setCurrentStoryIndex(currentStoryIndex + 1);
     } else {
+      goToNextUser();
+    }
+  };
+
+  const goToPrevUser = () => {
+    if (!usersWithStories || !userId) return;
+    
+    const currentUserIndex = usersWithStories.indexOf(userId);
+    
+    if (currentUserIndex > 0) {
+      const prevUserId = usersWithStories[currentUserIndex - 1];
+      navigate(`/story/view/${prevUserId}`);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const goToNextUser = () => {
+    if (!usersWithStories || !userId) return;
+    
+    const currentUserIndex = usersWithStories.indexOf(userId);
+    
+    if (currentUserIndex < usersWithStories.length - 1) {
+      const nextUserId = usersWithStories[currentUserIndex + 1];
+      navigate(`/story/view/${nextUserId}`);
+    } else {
       navigate(-1);
     }
   };
@@ -382,7 +429,43 @@ const StoryViewer = () => {
   const goToPrevStory = () => {
     if (currentStoryIndex > 0) {
       setCurrentStoryIndex(currentStoryIndex - 1);
+    } else {
+      goToPrevUser();
     }
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) {
+      return;
+    }
+    
+    const horizontalDistance = touchStartX.current - touchEndX.current;
+    const verticalDistance = touchStartY.current - touchEndY.current;
+    
+    if (Math.abs(horizontalDistance) > Math.abs(verticalDistance)) {
+      if (Math.abs(horizontalDistance) > 50) {
+        if (horizontalDistance > 0) {
+          goToNextStory();
+        } else {
+          goToPrevStory();
+        }
+      }
+    }
+    
+    touchStartX.current = null;
+    touchEndX.current = null;
+    touchStartY.current = null;
+    touchEndY.current = null;
   };
 
   const handleDeleteStory = () => {
@@ -439,7 +522,12 @@ const StoryViewer = () => {
   const currentStory = stories[currentStoryIndex];
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black flex flex-col"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="absolute top-0 left-0 right-0 z-10 p-2 flex gap-1">
         {stories.map((_, index) => (
           <div key={index} className="h-1 bg-gray-600 flex-1 rounded-full overflow-hidden">
@@ -502,24 +590,13 @@ const StoryViewer = () => {
         )}
       </div>
 
-      <div className="absolute inset-0 flex">
-        <div 
-          className="w-1/2 h-full" 
-          onClick={goToPrevStory}
-        />
-        <div 
-          className="w-1/2 h-full" 
-          onClick={goToNextStory}
-        />
-      </div>
-
       <div className="absolute bottom-4 left-0 right-0 flex justify-between px-4 opacity-0 hover:opacity-100 transition-opacity">
         <Button 
           variant="ghost" 
           size="icon" 
           className="text-white" 
           onClick={goToPrevStory}
-          disabled={currentStoryIndex === 0}
+          disabled={currentStoryIndex === 0 && !usersWithStories?.indexOf(userId as string) || usersWithStories?.indexOf(userId as string) === 0}
         >
           <ChevronLeft className="h-8 w-8" />
         </Button>
