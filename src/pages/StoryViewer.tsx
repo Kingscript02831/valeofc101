@@ -420,6 +420,9 @@ const StoryViewer = () => {
       const nextUserId = usersWithStories[currentUserIndex + 1];
       console.log("Going to next user:", nextUserId);
       navigate(`/story/view/${nextUserId}`);
+      // Reset progress and index for the new user
+      setCurrentStoryIndex(0);
+      setProgress(0);
     } else {
       console.log("No next user, going back");
       navigate("/");
@@ -555,15 +558,74 @@ const StoryViewer = () => {
   const toggleComments = () => {
     setShowComments(!showComments);
     
-    if (!showComments && commentInputRef.current) {
+    // Pause the story when comments are shown
+    if (!showComments) {
+      setIsPaused(true);
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+      }
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+        progressInterval.current = null;
+      }
+      
+      // Focus the comment input
       setTimeout(() => {
         commentInputRef.current?.focus();
       }, 300);
+    } else {
+      // Resume when comments are closed
+      setIsPaused(false);
+      if (videoRef.current && videoRef.current.paused) {
+        videoRef.current.play();
+      }
+      
+      // Restart the progress
+      if (!progressInterval.current) {
+        const duration = 5000;
+        const interval = 50;
+        const step = (interval / duration) * 100;
+        
+        progressInterval.current = setInterval(() => {
+          setProgress((prev) => {
+            const newProgress = prev + step;
+            if (newProgress >= 100) {
+              goToNextStory();
+              return 0;
+            }
+            return newProgress;
+          });
+        }, interval);
+      }
     }
   };
   
   const handleCloseComments = () => {
     setShowComments(false);
+    
+    // Resume playback when comments are closed
+    setIsPaused(false);
+    if (videoRef.current && videoRef.current.paused) {
+      videoRef.current.play();
+    }
+    
+    // Restart the progress
+    if (!progressInterval.current) {
+      const duration = 5000;
+      const interval = 50;
+      const step = (interval / duration) * 100;
+      
+      progressInterval.current = setInterval(() => {
+        setProgress((prev) => {
+          const newProgress = prev + step;
+          if (newProgress >= 100) {
+            goToNextStory();
+            return 0;
+          }
+          return newProgress;
+        });
+      }, interval);
+    }
   };
 
   if (isLoading) {
