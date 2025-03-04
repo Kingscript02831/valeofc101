@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, TouchEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -66,7 +65,6 @@ const StoryViewer = () => {
     },
   });
 
-  // Get all users with active stories
   const { data: usersWithStories } = useQuery({
     queryKey: ["usersWithStories"],
     queryFn: async () => {
@@ -78,7 +76,6 @@ const StoryViewer = () => {
 
       if (error) throw error;
       
-      // Get unique user IDs
       const uniqueUserIds = Array.from(new Set(data.map((story: any) => story.user_id)));
       console.log("Users with stories:", uniqueUserIds);
       return uniqueUserIds;
@@ -87,7 +84,6 @@ const StoryViewer = () => {
 
   const isOwner = currentUser?.id === userId;
 
-  // Get stories for the current user ID
   const { data: stories, isLoading } = useQuery({
     queryKey: ["viewStories", userId],
     queryFn: async () => {
@@ -110,7 +106,6 @@ const StoryViewer = () => {
 
       if (error) throw error;
 
-      // Transform the story data to match our interface
       const typedStories: Story[] = data.map((story: any) => ({
         ...story,
         media_type: story.media_type as "image" | "video",
@@ -420,7 +415,6 @@ const StoryViewer = () => {
       const nextUserId = usersWithStories[currentUserIndex + 1];
       console.log("Going to next user:", nextUserId);
       navigate(`/story/view/${nextUserId}`);
-      // Reset progress and index for the new user
       setCurrentStoryIndex(0);
       setProgress(0);
     } else {
@@ -442,7 +436,6 @@ const StoryViewer = () => {
     touchStartY.current = e.touches[0].clientY;
     touchStartTime.current = Date.now();
     
-    // Start a timer for long press detection
     longPressTimer.current = setTimeout(() => {
       if (!isPaused) {
         setIsPaused(true);
@@ -461,7 +454,6 @@ const StoryViewer = () => {
     touchEndX.current = e.touches[0].clientX;
     touchEndY.current = e.touches[0].clientY;
     
-    // If moved more than a small threshold, cancel the long press
     if (touchStartX.current && touchEndX.current && touchStartY.current && touchEndY.current) {
       const xDiff = Math.abs(touchStartX.current - touchEndX.current);
       const yDiff = Math.abs(touchStartY.current - touchEndY.current);
@@ -478,33 +470,6 @@ const StoryViewer = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
-    }
-    
-    // If it was paused due to long press, resume playback
-    if (isPaused) {
-      setIsPaused(false);
-      if (videoRef.current && videoRef.current.paused) {
-        videoRef.current.play();
-      }
-      
-      // Restart the progress interval
-      if (!progressInterval.current && !showComments) {
-        const duration = 5000;
-        const interval = 50;
-        const step = (interval / duration) * 100;
-        
-        progressInterval.current = setInterval(() => {
-          setProgress((prev) => {
-            const newProgress = prev + step;
-            if (newProgress >= 100) {
-              goToNextStory();
-              return 0;
-            }
-            return newProgress;
-          });
-        }, interval);
-      }
-      return;
     }
     
     if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) {
@@ -558,7 +523,6 @@ const StoryViewer = () => {
   const toggleComments = () => {
     setShowComments(!showComments);
     
-    // Pause the story when comments are shown
     if (!showComments) {
       setIsPaused(true);
       if (videoRef.current && !videoRef.current.paused) {
@@ -569,19 +533,16 @@ const StoryViewer = () => {
         progressInterval.current = null;
       }
       
-      // Focus the comment input
       setTimeout(() => {
         commentInputRef.current?.focus();
       }, 300);
     } else {
-      // Resume when comments are closed
       setIsPaused(false);
       if (videoRef.current && videoRef.current.paused) {
         videoRef.current.play();
       }
       
-      // Restart the progress
-      if (!progressInterval.current) {
+      if (!progressInterval.current && !isPaused) {
         const duration = 5000;
         const interval = 50;
         const step = (interval / duration) * 100;
@@ -603,14 +564,12 @@ const StoryViewer = () => {
   const handleCloseComments = () => {
     setShowComments(false);
     
-    // Resume playback when comments are closed
     setIsPaused(false);
     if (videoRef.current && videoRef.current.paused) {
       videoRef.current.play();
     }
     
-    // Restart the progress
-    if (!progressInterval.current) {
+    if (!progressInterval.current && !isPaused) {
       const duration = 5000;
       const interval = 50;
       const step = (interval / duration) * 100;
