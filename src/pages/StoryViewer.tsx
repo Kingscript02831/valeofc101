@@ -552,23 +552,23 @@ const StoryViewer = () => {
         </Button>
       </div>
 
-      {/* Área de comentários */}
+      {/* Área de comentários - Ajuste para tema claro/escuro */}
       <div 
-        className={`absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md rounded-t-3xl transition-all duration-300 ease-in-out overflow-hidden ${
+        className={`absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/80 backdrop-blur-md rounded-t-3xl transition-all duration-300 ease-in-out overflow-hidden ${
           showComments ? 'h-[60vh]' : 'h-0'
         }`}
       >
         <div className="p-4 h-full flex flex-col">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-1 bg-gray-700 rounded-full"></div>
+            <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
           </div>
           
-          <h3 className="text-white font-semibold mb-4">Comentários</h3>
+          <h3 className="text-black dark:text-white font-semibold mb-4">Comentários</h3>
           
           <div className="flex-1 overflow-y-auto">
             {isLoadingComments ? (
               <div className="flex justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-black dark:border-white"></div>
               </div>
             ) : comments && comments.length > 0 ? (
               <div className="space-y-4">
@@ -583,17 +583,17 @@ const StoryViewer = () => {
                         {comment.profiles?.username?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="bg-gray-800 rounded-2xl px-4 py-3 flex-1">
-                      <p className="text-white text-sm font-medium">
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 flex-1">
+                      <p className="text-black dark:text-white text-sm font-medium">
                         {comment.profiles?.username || "Usuário"}
                       </p>
-                      <p className="text-white text-sm mt-1">{comment.text}</p>
+                      <p className="text-gray-800 dark:text-gray-200 text-sm mt-1">{comment.text}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center text-gray-400 py-8">
+              <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                 Sem comentários ainda
               </div>
             )}
@@ -619,13 +619,13 @@ const StoryViewer = () => {
               placeholder="Adicione um comentário..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 bg-gray-700 border-none text-white rounded-full placeholder:text-gray-400"
+              className="flex-1 bg-gray-100 dark:bg-gray-800 border-none text-black dark:text-white rounded-full placeholder:text-gray-500 dark:placeholder:text-gray-400"
             />
             <Button 
               type="submit" 
               size="icon" 
               variant="ghost" 
-              className="text-white"
+              className="text-black dark:text-white"
               disabled={!commentText.trim()}
             >
               <Send className="h-5 w-5" />
@@ -634,7 +634,7 @@ const StoryViewer = () => {
         </div>
       </div>
 
-      {/* Barra de ações inferior */}
+      {/* Barra de ações inferior - Mover ícone de comentário para a direita */}
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/40 backdrop-blur-sm">
         <div className="px-4 py-3 flex items-center">
           <div className="flex-1">
