@@ -163,8 +163,8 @@ const StoriesBar = () => {
             >
               <Avatar 
                 className={`w-16 h-16 ${profile.has_viewed_stories 
-                  ? 'border-2 border-red-500' // Red border for viewed stories
-                  : 'border-2 border-green-500' // Green border for unviewed stories
+                  ? 'border-2 border-gray-500' // Gray border for viewed stories
+                  : 'border-2 border-pink-500' // Pink border for unviewed stories
                 }`}
               >
                 {profile.avatar_url ? (

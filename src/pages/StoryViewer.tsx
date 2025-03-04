@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, TouchEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -12,7 +13,7 @@ interface Story {
   id: string;
   user_id: string;
   media_url: string;
-  media_type: string;
+  media_type: "image" | "video";
   created_at: string;
   expires_at: string;
   user?: {
@@ -43,6 +44,7 @@ const StoryViewer = () => {
   const [likesCount, setLikesCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +53,8 @@ const StoryViewer = () => {
   const touchEndX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
+  const touchStartTime = useRef<number | null>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
@@ -62,6 +66,7 @@ const StoryViewer = () => {
     },
   });
 
+  // Get all users with active stories
   const { data: usersWithStories } = useQuery({
     queryKey: ["usersWithStories"],
     queryFn: async () => {
@@ -73,13 +78,16 @@ const StoryViewer = () => {
 
       if (error) throw error;
       
+      // Get unique user IDs
       const uniqueUserIds = Array.from(new Set(data.map((story: any) => story.user_id)));
+      console.log("Users with stories:", uniqueUserIds);
       return uniqueUserIds;
     },
   });
 
   const isOwner = currentUser?.id === userId;
 
+  // Get stories for the current user ID
   const { data: stories, isLoading } = useQuery({
     queryKey: ["viewStories", userId],
     queryFn: async () => {
@@ -102,10 +110,14 @@ const StoryViewer = () => {
 
       if (error) throw error;
 
-      return data.map((story: Story) => ({
+      // Transform the story data to match our interface
+      const typedStories: Story[] = data.map((story: any) => ({
         ...story,
+        media_type: story.media_type as "image" | "video",
         user: userData
       }));
+
+      return typedStories;
     },
     enabled: !!userId,
   });
@@ -196,6 +208,7 @@ const StoryViewer = () => {
     checkUserLike(storyId);
     fetchLikesCount(storyId);
     setShowComments(false);
+    setIsPaused(false);
   }, [currentStoryIndex, stories, currentUser]);
 
   const markAsViewedMutation = useMutation({
@@ -213,6 +226,7 @@ const StoryViewer = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userStories"] });
+      queryClient.invalidateQueries({ queryKey: ["followingWithStories"] });
     },
   });
 
@@ -295,10 +309,15 @@ const StoryViewer = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userStories"] });
       queryClient.invalidateQueries({ queryKey: ["viewStories"] });
+      queryClient.invalidateQueries({ queryKey: ["followingWithStories"] }); 
       toast.success("História excluída com sucesso");
       
       if (stories && stories.length <= 1) {
         navigate("/");
+      } else {
+        if (currentStoryIndex >= stories.length - 1) {
+          setCurrentStoryIndex(stories.length - 2);
+        }
       }
     },
     onError: (error) => {
@@ -312,6 +331,7 @@ const StoryViewer = () => {
 
     if (progressInterval.current) {
       clearInterval(progressInterval.current);
+      progressInterval.current = null;
     }
 
     if (stories[currentStoryIndex]) {
@@ -323,7 +343,7 @@ const StoryViewer = () => {
       return;
     }
 
-    if (showComments) {
+    if (showComments || isPaused) {
       return;
     }
 
@@ -347,36 +367,10 @@ const StoryViewer = () => {
     return () => {
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
+        progressInterval.current = null;
       }
     };
-  }, [currentStoryIndex, isLoading, stories, showComments]);
-
-  useEffect(() => {
-    if (showComments && progressInterval.current) {
-      clearInterval(progressInterval.current);
-    } else if (!showComments && stories && stories.length > 0 && !isLoading) {
-      const duration = 5000;
-      const interval = 50;
-      const step = (interval / duration) * 100;
-      
-      progressInterval.current = setInterval(() => {
-        setProgress((prev) => {
-          const newProgress = prev + step;
-          if (newProgress >= 100) {
-            goToNextStory();
-            return 0;
-          }
-          return newProgress;
-        });
-      }, interval);
-    }
-
-    return () => {
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-      }
-    };
-  }, [showComments]);
+  }, [currentStoryIndex, isLoading, stories, showComments, isPaused]);
 
   const handleVideoProgress = () => {
     if (!videoRef.current) return;
@@ -404,11 +398,14 @@ const StoryViewer = () => {
     if (!usersWithStories || !userId) return;
     
     const currentUserIndex = usersWithStories.indexOf(userId);
+    console.log("Current user index:", currentUserIndex);
     
     if (currentUserIndex > 0) {
       const prevUserId = usersWithStories[currentUserIndex - 1];
+      console.log("Going to previous user:", prevUserId);
       navigate(`/story/view/${prevUserId}`);
     } else {
+      console.log("No previous user, going back");
       navigate(-1);
     }
   };
@@ -417,12 +414,15 @@ const StoryViewer = () => {
     if (!usersWithStories || !userId) return;
     
     const currentUserIndex = usersWithStories.indexOf(userId);
+    console.log("Current user index:", currentUserIndex, "Total users:", usersWithStories.length);
     
-    if (currentUserIndex < usersWithStories.length - 1) {
+    if (currentUserIndex !== -1 && currentUserIndex < usersWithStories.length - 1) {
       const nextUserId = usersWithStories[currentUserIndex + 1];
+      console.log("Going to next user:", nextUserId);
       navigate(`/story/view/${nextUserId}`);
     } else {
-      navigate(-1);
+      console.log("No next user, going back");
+      navigate("/");
     }
   };
 
@@ -437,14 +437,73 @@ const StoryViewer = () => {
   const handleTouchStart = (e: TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+    
+    // Start a timer for long press detection
+    longPressTimer.current = setTimeout(() => {
+      if (!isPaused) {
+        setIsPaused(true);
+        if (videoRef.current && videoRef.current.paused === false) {
+          videoRef.current.pause();
+        }
+        if (progressInterval.current) {
+          clearInterval(progressInterval.current);
+          progressInterval.current = null;
+        }
+      }
+    }, 200);
   };
 
   const handleTouchMove = (e: TouchEvent) => {
     touchEndX.current = e.touches[0].clientX;
     touchEndY.current = e.touches[0].clientY;
+    
+    // If moved more than a small threshold, cancel the long press
+    if (touchStartX.current && touchEndX.current && touchStartY.current && touchEndY.current) {
+      const xDiff = Math.abs(touchStartX.current - touchEndX.current);
+      const yDiff = Math.abs(touchStartY.current - touchEndY.current);
+      if (xDiff > 10 || yDiff > 10) {
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
+      }
+    }
   };
 
   const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    
+    // If it was paused due to long press, resume playback
+    if (isPaused) {
+      setIsPaused(false);
+      if (videoRef.current && videoRef.current.paused) {
+        videoRef.current.play();
+      }
+      
+      // Restart the progress interval
+      if (!progressInterval.current && !showComments) {
+        const duration = 5000;
+        const interval = 50;
+        const step = (interval / duration) * 100;
+        
+        progressInterval.current = setInterval(() => {
+          setProgress((prev) => {
+            const newProgress = prev + step;
+            if (newProgress >= 100) {
+              goToNextStory();
+              return 0;
+            }
+            return newProgress;
+          });
+        }, interval);
+      }
+      return;
+    }
+    
     if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) {
       return;
     }
@@ -466,6 +525,7 @@ const StoryViewer = () => {
     touchEndX.current = null;
     touchStartY.current = null;
     touchEndY.current = null;
+    touchStartTime.current = null;
   };
 
   const handleDeleteStory = () => {
@@ -500,6 +560,10 @@ const StoryViewer = () => {
         commentInputRef.current?.focus();
       }, 300);
     }
+  };
+  
+  const handleCloseComments = () => {
+    setShowComments(false);
   };
 
   if (isLoading) {
@@ -596,7 +660,7 @@ const StoryViewer = () => {
           size="icon" 
           className="text-white" 
           onClick={goToPrevStory}
-          disabled={currentStoryIndex === 0 && !usersWithStories?.indexOf(userId as string) || usersWithStories?.indexOf(userId as string) === 0}
+          disabled={currentStoryIndex === 0 && usersWithStories?.indexOf(userId as string) === 0}
         >
           <ChevronLeft className="h-8 w-8" />
         </Button>
@@ -616,8 +680,16 @@ const StoryViewer = () => {
         }`}
       >
         <div className="p-4 h-full flex flex-col">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto"></div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              onClick={handleCloseComments}
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
           
           <h3 className="text-black dark:text-white font-semibold mb-4">Comentários</h3>
