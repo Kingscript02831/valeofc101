@@ -43,7 +43,6 @@ const StoryViewer = () => {
   const [likesCount, setLikesCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
@@ -130,18 +129,9 @@ const StoryViewer = () => {
   });
 
   const handleDeleteComment = (commentId: string) => {
-    setCommentToDelete(commentId);
-  };
-
-  const confirmDeleteComment = () => {
-    if (commentToDelete) {
-      deleteCommentMutation.mutate(commentToDelete);
-      setCommentToDelete(null);
+    if (confirm("Tem certeza que deseja excluir este comentário?")) {
+      deleteCommentMutation.mutate(commentId);
     }
-  };
-
-  const cancelDeleteComment = () => {
-    setCommentToDelete(null);
   };
 
   const checkUserLike = async (storyId: string) => {
@@ -684,35 +674,6 @@ const StoryViewer = () => {
           >
             <Trash2 className="h-5 w-5" />
           </Button>
-        </div>
-      )}
-
-      {commentToDelete && (
-        <div className="confirmation-dialog" onClick={cancelDeleteComment}>
-          <div className="confirmation-dialog-overlay" />
-          <div 
-            className="confirmation-dialog-content" 
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="confirmation-dialog-title">Excluir comentário</h3>
-            <p className="confirmation-dialog-description">
-              Tem certeza de que deseja excluir este comentário? Esta ação não pode ser desfeita.
-            </p>
-            <div className="confirmation-dialog-actions">
-              <button 
-                className="confirmation-dialog-cancel"
-                onClick={cancelDeleteComment}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="confirmation-dialog-confirm"
-                onClick={confirmDeleteComment}
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
