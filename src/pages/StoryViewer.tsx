@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, ChevronLeft, ChevronRight, Trash2, Send } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Trash2, Send, MessageSquare, Heart } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -48,7 +47,6 @@ const StoryViewer = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
 
-  // Verificar se o usuário atual é o dono das histórias
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
@@ -61,7 +59,6 @@ const StoryViewer = () => {
 
   const isOwner = currentUser?.id === userId;
 
-  // Buscar histórias do usuário
   const { data: stories, isLoading } = useQuery({
     queryKey: ["viewStories", userId],
     queryFn: async () => {
@@ -84,7 +81,6 @@ const StoryViewer = () => {
 
       if (error) throw error;
 
-      // Adicionar as informações do usuário a cada história
       return data.map((story: Story) => ({
         ...story,
         user: userData
@@ -93,7 +89,6 @@ const StoryViewer = () => {
     enabled: !!userId,
   });
 
-  // Buscar comentários da história atual
   const { data: comments, isLoading: isLoadingComments } = useQuery({
     queryKey: ["storyComments", stories?.[currentStoryIndex]?.id],
     queryFn: async () => {
@@ -112,7 +107,6 @@ const StoryViewer = () => {
     enabled: !!stories && stories.length > 0 && currentStoryIndex < stories.length,
   });
 
-  // Verificar se o usuário atual curtiu a história atual
   const checkUserLike = async (storyId: string) => {
     if (!currentUser || !storyId) return;
 
@@ -131,7 +125,6 @@ const StoryViewer = () => {
     setHasLiked(!!data);
   };
 
-  // Contar o número de curtidas para a história atual
   const fetchLikesCount = async (storyId: string) => {
     if (!storyId) return;
 
@@ -148,7 +141,6 @@ const StoryViewer = () => {
     setLikesCount(count || 0);
   };
 
-  // Quando a história atual muda, verificar curtida e contar curtidas
   useEffect(() => {
     if (!stories || stories.length === 0 || currentStoryIndex >= stories.length) return;
     
@@ -158,7 +150,6 @@ const StoryViewer = () => {
     setShowComments(false);
   }, [currentStoryIndex, stories, currentUser]);
 
-  // Mutação para marcar uma história como visualizada
   const markAsViewedMutation = useMutation({
     mutationFn: async (storyId: string) => {
       if (!currentUser || isOwner) return;
@@ -177,13 +168,11 @@ const StoryViewer = () => {
     },
   });
 
-  // Mutação para curtir/descurtir uma história
   const toggleLikeMutation = useMutation({
     mutationFn: async (storyId: string) => {
       if (!currentUser) return;
 
       if (hasLiked) {
-        // Remover curtida
         const { error } = await supabase
           .from("story_likes")
           .delete()
@@ -194,7 +183,6 @@ const StoryViewer = () => {
         
         return { action: 'unlike' };
       } else {
-        // Adicionar curtida
         const { error } = await supabase
           .from("story_likes")
           .insert({
@@ -208,14 +196,11 @@ const StoryViewer = () => {
       }
     },
     onSuccess: (data, storyId) => {
-      // Atualizar o estado local
       setHasLiked(!hasLiked);
       setLikesCount(prev => data?.action === 'like' ? prev + 1 : prev - 1);
       
-      // Mostrar toast de confirmação
       toast.success(data?.action === 'like' ? "Story curtido!" : "Curtida removida");
       
-      // Invalidar consultas relevantes
       queryClient.invalidateQueries({ queryKey: ["storyLikes", storyId] });
     },
     onError: (error) => {
@@ -224,7 +209,6 @@ const StoryViewer = () => {
     }
   });
 
-  // Mutação para adicionar um comentário
   const addCommentMutation = useMutation({
     mutationFn: async ({ storyId, text }: { storyId: string, text: string }) => {
       if (!currentUser) throw new Error("Usuário não autenticado");
@@ -244,7 +228,6 @@ const StoryViewer = () => {
       return data as StoryComment;
     },
     onSuccess: () => {
-      // Limpar o campo de texto e atualizar a lista de comentários
       setCommentText("");
       queryClient.invalidateQueries({ queryKey: ["storyComments", stories?.[currentStoryIndex]?.id] });
       toast.success("Comentário adicionado!");
@@ -255,7 +238,6 @@ const StoryViewer = () => {
     }
   });
 
-  // Mutação para excluir uma história
   const deleteStoryMutation = useMutation({
     mutationFn: async (storyId: string) => {
       const { error } = await supabase
@@ -270,7 +252,6 @@ const StoryViewer = () => {
       queryClient.invalidateQueries({ queryKey: ["viewStories"] });
       toast.success("História excluída com sucesso");
       
-      // Se não há mais histórias, voltar para a página inicial
       if (stories && stories.length <= 1) {
         navigate("/");
       }
@@ -281,35 +262,28 @@ const StoryViewer = () => {
     },
   });
 
-  // Iniciar o temporizador de progresso
   useEffect(() => {
     if (isLoading || !stories || stories.length === 0) return;
 
-    // Limpar qualquer intervalo anterior
     if (progressInterval.current) {
       clearInterval(progressInterval.current);
     }
 
-    // Marcar a história atual como visualizada
     if (stories[currentStoryIndex]) {
       markAsViewedMutation.mutate(stories[currentStoryIndex].id);
     }
 
-    // Se for um vídeo, usar a duração do vídeo como temporizador
     if (videoRef.current && stories[currentStoryIndex]?.media_type === 'video') {
-      // Os eventos do vídeo lidarão com o progresso
       setProgress(0);
       return;
     }
 
-    // Parar o timer se os comentários estiverem abertos
     if (showComments) {
       return;
     }
 
-    // Configurar um temporizador para imagens (5 segundos)
-    const duration = 5000; // 5 segundos por história
-    const interval = 50; // Atualizar a cada 50ms para suavidade
+    const duration = 5000;
+    const interval = 50;
     const step = (interval / duration) * 100;
     
     setProgress(0);
@@ -332,12 +306,10 @@ const StoryViewer = () => {
     };
   }, [currentStoryIndex, isLoading, stories, showComments]);
 
-  // Pausar o temporizador quando os comentários estão abertos
   useEffect(() => {
     if (showComments && progressInterval.current) {
       clearInterval(progressInterval.current);
     } else if (!showComments && stories && stories.length > 0 && !isLoading) {
-      // Reiniciar o temporizador se os comentários forem fechados
       const duration = 5000;
       const interval = 50;
       const step = (interval / duration) * 100;
@@ -361,7 +333,6 @@ const StoryViewer = () => {
     };
   }, [showComments]);
 
-  // Manipular eventos de vídeo
   const handleVideoProgress = () => {
     if (!videoRef.current) return;
     
@@ -374,26 +345,22 @@ const StoryViewer = () => {
     goToNextStory();
   };
 
-  // Navegar para a próxima história
   const goToNextStory = () => {
     if (!stories || stories.length === 0) return;
     
     if (currentStoryIndex < stories.length - 1) {
       setCurrentStoryIndex(currentStoryIndex + 1);
     } else {
-      // Voltar para a tela anterior quando terminar todas as histórias
       navigate(-1);
     }
   };
 
-  // Navegar para a história anterior
   const goToPrevStory = () => {
     if (currentStoryIndex > 0) {
       setCurrentStoryIndex(currentStoryIndex - 1);
     }
   };
 
-  // Manipular a exclusão de uma história
   const handleDeleteStory = () => {
     if (!stories) return;
     
@@ -402,14 +369,12 @@ const StoryViewer = () => {
     }
   };
 
-  // Manipular curtida
   const handleLikeStory = () => {
     if (!stories || !currentUser) return;
     
     toggleLikeMutation.mutate(stories[currentStoryIndex].id);
   };
 
-  // Manipular envio de comentário
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim() || !stories || !currentUser) return;
@@ -420,11 +385,9 @@ const StoryViewer = () => {
     });
   };
 
-  // Alternar exibição de comentários
   const toggleComments = () => {
     setShowComments(!showComments);
     
-    // Focar no input de comentário quando os comentários são exibidos
     if (!showComments && commentInputRef.current) {
       setTimeout(() => {
         commentInputRef.current?.focus();
@@ -432,7 +395,6 @@ const StoryViewer = () => {
     }
   };
 
-  // Se estiver carregando ou não houver histórias, mostrar um estado de carregamento
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -454,7 +416,6 @@ const StoryViewer = () => {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col">
-      {/* Barra de progresso */}
       <div className="absolute top-0 left-0 right-0 z-10 p-2 flex gap-1">
         {stories.map((_, index) => (
           <div key={index} className="h-1 bg-gray-600 flex-1 rounded-full overflow-hidden">
@@ -466,7 +427,6 @@ const StoryViewer = () => {
         ))}
       </div>
 
-      {/* Cabeçalho - informações do usuário */}
       <div className="absolute top-4 left-0 right-0 z-10 px-4 pt-4">
         <div className="flex items-center">
           <Avatar className="h-10 w-10 mr-3 border border-white">
@@ -497,7 +457,6 @@ const StoryViewer = () => {
         </div>
       </div>
 
-      {/* Conteúdo da história */}
       <div className="flex-1 flex items-center justify-center">
         {currentStory.media_type === 'video' ? (
           <video
@@ -519,7 +478,6 @@ const StoryViewer = () => {
         )}
       </div>
 
-      {/* Botões de navegação */}
       <div className="absolute inset-0 flex">
         <div 
           className="w-1/2 h-full" 
@@ -531,7 +489,6 @@ const StoryViewer = () => {
         />
       </div>
 
-      {/* Botões de navegação visíveis para debugging */}
       <div className="absolute bottom-4 left-0 right-0 flex justify-between px-4 opacity-0 hover:opacity-100 transition-opacity">
         <Button 
           variant="ghost" 
@@ -552,7 +509,6 @@ const StoryViewer = () => {
         </Button>
       </div>
 
-      {/* Área de comentários - Ajuste para tema claro/escuro */}
       <div 
         className={`absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/80 backdrop-blur-md rounded-t-3xl transition-all duration-300 ease-in-out overflow-hidden ${
           showComments ? 'h-[60vh]' : 'h-0'
@@ -634,9 +590,19 @@ const StoryViewer = () => {
         </div>
       </div>
 
-      {/* Barra de ações inferior - Mover ícone de comentário para a direita */}
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/40 backdrop-blur-sm">
         <div className="px-4 py-3 flex items-center">
+          <button 
+            className="flex items-center justify-center mr-4"
+            onClick={toggleComments}
+          >
+            <img 
+              src="/comentario.png" 
+              alt="Comentar" 
+              className="h-7 w-7"
+            />
+          </button>
+          
           <div className="flex-1">
             <form onSubmit={handleAddComment} className="flex items-center">
               <Input
@@ -649,32 +615,20 @@ const StoryViewer = () => {
               />
             </form>
           </div>
-          <div className="flex items-center gap-4 ml-4">
-            <button 
-              className="flex items-center justify-center"
-              onClick={handleLikeStory}
-            >
-              <img 
-                src={hasLiked ? "/amei1.png" : "/curtidas.png"} 
-                alt={hasLiked ? "Amei" : "Curtir"} 
-                className="h-7 w-7"
-              />
-            </button>
-            <button 
-              className="flex items-center justify-center"
-              onClick={toggleComments}
-            >
-              <img 
-                src="/comentario.png" 
-                alt="Comentar" 
-                className="h-7 w-7"
-              />
-            </button>
-          </div>
+          
+          <button 
+            className="flex items-center justify-center ml-4"
+            onClick={handleLikeStory}
+          >
+            <img 
+              src={hasLiked ? "/amei1.png" : "/curtidas.png"} 
+              alt={hasLiked ? "Amei" : "Curtir"} 
+              className="h-7 w-7"
+            />
+          </button>
         </div>
       </div>
 
-      {/* Botão de excluir para o proprietário */}
       {isOwner && (
         <div className="absolute bottom-20 right-4">
           <Button 
