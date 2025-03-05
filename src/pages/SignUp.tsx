@@ -28,6 +28,16 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formErrors, setFormErrors] = useState({
+    fullName: false,
+    username: false,
+    email: false,
+    phone: false,
+    locationId: false,
+    birthDate: false,
+    password: false,
+    confirmPassword: false
+  });
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useSiteConfig();
 
@@ -62,26 +72,51 @@ const SignUp = () => {
     if (newUsername) {
       const validation = validateUsername(newUsername);
       setUsernameError(validation.message);
+      setFormErrors(prev => ({...prev, username: !validation.isValid}));
     } else {
       setUsernameError("");
+      setFormErrors(prev => ({...prev, username: true}));
     }
+  };
+
+  const validateForm = () => {
+    const errors = {
+      fullName: !fullName.trim(),
+      username: !username.trim() || !!usernameError,
+      email: !email.trim(),
+      phone: !phone.trim(),
+      locationId: !locationId.trim(),
+      birthDate: !birthDate.trim(),
+      password: !password.trim(),
+      confirmPassword: !confirmPassword.trim() || confirmPassword !== password
+    };
+    
+    setFormErrors(errors);
+    
+    // Retorna true se não houver erros
+    return !Object.values(errors).some(Boolean);
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
+    if (!validateForm()) {
+      toast.error("Preencha todos os campos corretamente!", { duration: 3000 });
+      return;
+    }
+    
     // Validar username antes de prosseguir
     if (username) {
       const validation = validateUsername(username);
       if (!validation.isValid) {
-        toast.error(validation.message);
+        toast.error(validation.message, { duration: 3000 });
         setUsernameError(validation.message);
         return;
       }
     }
     
     if (password !== confirmPassword) {
-      toast.error("As senhas não coincidem!");
+      toast.error("As senhas não coincidem!", { duration: 3000 });
       return;
     }
 
@@ -107,7 +142,7 @@ const SignUp = () => {
       navigate("/login");
     } catch (error: any) {
       const errorMessage = translateAuthError(error.message);
-      toast.error(errorMessage);
+      toast.error(errorMessage, { duration: 3000 });
     } finally {
       setLoading(false);
     }
@@ -126,6 +161,9 @@ const SignUp = () => {
   }
 
   const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
+  const getInputClassName = (fieldName: keyof typeof formErrors) => {
+    return `bg-black border-gray-700 text-white placeholder:text-gray-500 ${formErrors[fieldName] ? 'border-red-500' : ''}`;
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -179,10 +217,16 @@ const SignUp = () => {
                 type="text"
                 placeholder="Digite seu nome completo"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  setFormErrors(prev => ({...prev, fullName: false}));
+                }}
                 required
-                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                className={getInputClassName("fullName")}
               />
+              {formErrors.fullName && (
+                <p className="text-red-500 text-xs mt-1">Nome completo é obrigatório</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -194,10 +238,13 @@ const SignUp = () => {
                 value={username}
                 onChange={handleUsernameChange}
                 required
-                className={`bg-black border-gray-700 text-white placeholder:text-gray-500 ${usernameError ? 'border-red-500' : ''}`}
+                className={`bg-black border-gray-700 text-white placeholder:text-gray-500 ${(formErrors.username || usernameError) ? 'border-red-500' : ''}`}
               />
               {usernameError && (
                 <p className="text-red-500 text-xs mt-1">{usernameError}</p>
+              )}
+              {formErrors.username && !usernameError && (
+                <p className="text-red-500 text-xs mt-1">Nome de usuário é obrigatório</p>
               )}
               <p className="text-gray-400 text-xs mt-1">
                 Apenas letras, números, pontos (.) e underscores (_). Entre 1-30 caracteres.
@@ -211,10 +258,16 @@ const SignUp = () => {
                 type="email"
                 placeholder="Digite seu melhor e-mail"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setFormErrors(prev => ({...prev, email: false}));
+                }}
                 required
-                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                className={getInputClassName("email")}
               />
+              {formErrors.email && (
+                <p className="text-red-500 text-xs mt-1">E-mail é obrigatório</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -224,16 +277,28 @@ const SignUp = () => {
                 type="tel"
                 placeholder="Digite seu telefone"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setFormErrors(prev => ({...prev, phone: false}));
+                }}
                 required
-                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                className={getInputClassName("phone")}
               />
+              {formErrors.phone && (
+                <p className="text-red-500 text-xs mt-1">Telefone é obrigatório</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <label htmlFor="location" className="block text-sm">Localização</label>
-              <Select value={locationId} onValueChange={setLocationId}>
-                <SelectTrigger className="bg-black border-gray-700 text-white">
+              <Select 
+                value={locationId} 
+                onValueChange={(value) => {
+                  setLocationId(value);
+                  setFormErrors(prev => ({...prev, locationId: false}));
+                }}
+              >
+                <SelectTrigger className={`bg-black border-gray-700 text-white ${formErrors.locationId ? 'border-red-500' : ''}`}>
                   <SelectValue placeholder="Selecione sua cidade" />
                 </SelectTrigger>
                 <SelectContent className="bg-black border-gray-700 text-white">
@@ -244,6 +309,9 @@ const SignUp = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {formErrors.locationId && (
+                <p className="text-red-500 text-xs mt-1">Localização é obrigatória</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -252,10 +320,16 @@ const SignUp = () => {
                 id="birthDate"
                 type="date"
                 value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                onChange={(e) => {
+                  setBirthDate(e.target.value);
+                  setFormErrors(prev => ({...prev, birthDate: false}));
+                }}
                 required
-                className="bg-black border-gray-700 text-white"
+                className={`bg-black border-gray-700 text-white ${formErrors.birthDate ? 'border-red-500' : ''}`}
               />
+              {formErrors.birthDate && (
+                <p className="text-red-500 text-xs mt-1">Data de nascimento é obrigatória</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -266,9 +340,12 @@ const SignUp = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Criar sua senha"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setFormErrors(prev => ({...prev, password: false}));
+                  }}
                   required
-                  className="bg-black border-gray-700 text-white placeholder:text-gray-500 pr-10"
+                  className={`bg-black border-gray-700 text-white placeholder:text-gray-500 pr-10 ${formErrors.password ? 'border-red-500' : ''}`}
                 />
                 <button 
                   type="button"
@@ -288,6 +365,9 @@ const SignUp = () => {
                   )}
                 </button>
               </div>
+              {formErrors.password && (
+                <p className="text-red-500 text-xs mt-1">Senha é obrigatória</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -298,9 +378,12 @@ const SignUp = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirme sua senha"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setFormErrors(prev => ({...prev, confirmPassword: false}));
+                  }}
                   required
-                  className="bg-black border-gray-700 text-white placeholder:text-gray-500 pr-10"
+                  className={`bg-black border-gray-700 text-white placeholder:text-gray-500 pr-10 ${formErrors.confirmPassword ? 'border-red-500' : ''}`}
                 />
                 <button 
                   type="button"
@@ -320,6 +403,11 @@ const SignUp = () => {
                   )}
                 </button>
               </div>
+              {formErrors.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1">
+                  {password !== confirmPassword ? "As senhas não coincidem" : "Confirmação de senha é obrigatória"}
+                </p>
+              )}
             </div>
             
             <Button 
