@@ -38,6 +38,7 @@ import StoryForm from "./pages/StoryForm";
 import StoryViewer from "./pages/StoryViewer";
 import StoryManager from "./pages/StoryManager";
 import StoryCreator from "./pages/StoryCreator"; 
+import StoryEdit from "./pages/StoryEdit";
 import Followers from "./pages/Followers";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,7 @@ const App: React.FC = () => {
                   <Route path="/story/view/:userId" element={<StoryViewer />} />
                   <Route path="/story/manage" element={<StoryManager />} />
                   <Route path="/story/creator" element={<StoryCreator />} />
+                  <Route path="/story/edit/:id" element={<StoryEdit />} />
                   
                   {/* Rotas para seguidores */}
                   <Route path="/seguidores" element={<Followers />} />

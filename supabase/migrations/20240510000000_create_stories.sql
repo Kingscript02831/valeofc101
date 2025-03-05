@@ -6,7 +6,9 @@ create table if not exists public.stories (
   media_url text not null,
   media_type text not null check (media_type in ('image', 'video', 'text')),
   created_at timestamp with time zone default now() not null,
-  expires_at timestamp with time zone default (now() + interval '24 hours') not null
+  expires_at timestamp with time zone default (now() + interval '24 hours') not null,
+  link_url text,
+  tagged_person text
 );
 
 -- Tabela para registrar visualizações de histórias

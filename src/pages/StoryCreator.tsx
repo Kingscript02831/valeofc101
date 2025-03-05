@@ -80,9 +80,7 @@ const StoryCreator = () => {
   };
   
   const handleEditMedia = (item: GalleryItem) => {
-    // Store the item in local storage for the edit page to access
-    localStorage.setItem("editStoryItem", JSON.stringify(item));
-    navigate("/story/edit/" + item.id);
+    navigate(`/story/edit/${item.id}`);
   };
   
   // Function to render text content from JSON
