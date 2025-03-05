@@ -608,7 +608,7 @@ const StoryViewer = () => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black flex flex-col"
+      className="fixed inset-0 bg-black flex flex-col story-viewer-container"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -646,8 +646,8 @@ const StoryViewer = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-white" 
-            onClick={() => navigate(-1)}
+            className="text-white story-exit-button" 
+            onClick={() => navigate("/")}
           >
             <X className="h-6 w-6" />
           </Button>
@@ -696,29 +696,29 @@ const StoryViewer = () => {
       </div>
 
       <div 
-        className={`absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-black/80 backdrop-blur-md rounded-t-3xl transition-all duration-300 ease-in-out overflow-hidden ${
+        className={`absolute bottom-0 left-0 right-0 bg-black dark:bg-black backdrop-blur-none rounded-t-3xl transition-all duration-300 ease-in-out overflow-hidden story-comments-area ${
           showComments ? 'h-[60vh]' : 'h-0'
         }`}
       >
         <div className="p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto"></div>
+            <div className="w-12 h-1 bg-gray-500 dark:bg-gray-700 rounded-full mx-auto"></div>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="absolute right-4 top-4 text-gray-300 hover:text-white"
               onClick={handleCloseComments}
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
           
-          <h3 className="text-black dark:text-white font-semibold mb-4">Comentários</h3>
+          <h3 className="text-white font-semibold mb-4">Comentários</h3>
           
           <div className="flex-1 overflow-y-auto">
             {isLoadingComments ? (
               <div className="flex justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-black dark:border-white"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
               </div>
             ) : comments && comments.length > 0 ? (
               <div className="space-y-4">
@@ -733,9 +733,9 @@ const StoryViewer = () => {
                         {comment.profiles?.username?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 flex-1">
+                    <div className="bg-gray-900 rounded-2xl px-4 py-3 flex-1">
                       <div className="flex justify-between items-center">
-                        <p className="text-black dark:text-white text-sm font-medium">
+                        <p className="text-white text-sm font-medium">
                           {comment.profiles?.username || "Usuário"}
                         </p>
                         {currentUser && comment.user_id === currentUser.id && (
@@ -743,19 +743,19 @@ const StoryViewer = () => {
                             onClick={() => handleDeleteComment(comment.id)}
                             variant="ghost" 
                             size="icon" 
-                            className="h-6 w-6 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
+                            className="h-6 w-6 text-gray-400 hover:text-red-400"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
-                      <p className="text-gray-800 dark:text-gray-200 text-sm mt-1">{comment.text}</p>
+                      <p className="text-gray-200 text-sm mt-1">{comment.text}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+              <div className="text-center text-gray-400 py-8">
                 Sem comentários ainda
               </div>
             )}
@@ -781,13 +781,13 @@ const StoryViewer = () => {
               placeholder="Adicione um comentário..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 bg-gray-100 dark:bg-gray-800 border-none text-black dark:text-white rounded-full placeholder:text-gray-500 dark:placeholder:text-gray-400"
+              className="flex-1 bg-gray-900 border-none text-white rounded-full placeholder:text-gray-400"
             />
             <Button 
               type="submit" 
               size="icon" 
               variant="ghost" 
-              className="text-black dark:text-white"
+              className="text-white"
               disabled={!commentText.trim()}
             >
               <Send className="h-5 w-5" />
@@ -796,7 +796,7 @@ const StoryViewer = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/40 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-black story-comment-bar">
         <div className="px-4 py-3 flex items-center">
           <button 
             className="flex items-center justify-center mr-4"
@@ -816,7 +816,7 @@ const StoryViewer = () => {
                 placeholder="Enviar mensagem"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                className="bg-gray-800/60 border-0 text-white rounded-full placeholder:text-gray-400"
+                className="bg-gray-900 border-0 text-white rounded-full placeholder:text-gray-400"
                 onClick={() => setShowComments(true)}
               />
             </form>
