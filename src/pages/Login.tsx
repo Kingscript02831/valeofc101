@@ -53,6 +53,9 @@ const Login = () => {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
 
+  // Variable for the link color that matches the button color
+  const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Left side with image and quote */}
@@ -136,7 +139,7 @@ const Login = () => {
                 </button>
               </div>
               <div className="text-right">
-                <Link to="/reset-password" className="text-sm text-purple-400 hover:underline">
+                <Link to="/reset-password" className="text-sm hover:underline" style={linkColorStyle}>
                   Esqueceu a senha?
                 </Link>
               </div>
@@ -156,7 +159,7 @@ const Login = () => {
           </form>
           
           <p className="mt-6 text-center text-sm text-gray-400">
-            Não possui uma conta? <Link to="/signup" className="text-purple-400 hover:underline">Criar conta</Link>
+            Não possui uma conta? <Link to="/signup" className="hover:underline" style={linkColorStyle}>Criar conta</Link>
           </p>
         </div>
         
