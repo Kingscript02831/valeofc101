@@ -8,8 +8,9 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Link, Save } from "lucide-react";
+import { ArrowLeft, Link as LinkIcon, Save, Image, Video } from "lucide-react";
 import { MediaCarousel } from "../components/MediaCarousel";
+import PhotoUrlDialog from "../components/PhotoUrlDialog";
 
 interface StoryData {
   id: string;
@@ -27,7 +28,10 @@ const StoryEdit = () => {
   const queryClient = useQueryClient();
   
   const [linkUrl, setLinkUrl] = useState<string>("");
+  const [mediaUrl, setMediaUrl] = useState<string>("");
+  const [mediaType, setMediaType] = useState<"image" | "video" | "text">("image");
   const [isLoading, setIsLoading] = useState(false);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
 
   // Fetch story data
   const { data: story, isLoading: isStoryLoading } = useQuery({
@@ -48,8 +52,16 @@ const StoryEdit = () => {
 
   // Initialize form with existing data when story data is loaded
   useEffect(() => {
-    if (story && story.link_url) {
-      setLinkUrl(story.link_url);
+    if (story) {
+      if (story.link_url) {
+        setLinkUrl(story.link_url);
+      }
+      if (story.media_url) {
+        setMediaUrl(story.media_url);
+      }
+      if (story.media_type) {
+        setMediaType(story.media_type);
+      }
     }
   }, [story]);
 
@@ -62,7 +74,8 @@ const StoryEdit = () => {
       const { data, error } = await supabase
         .from("stories")
         .update({
-          link_url: linkUrl || null
+          link_url: linkUrl || null,
+          media_url: mediaUrl
         })
         .eq("id", id)
         .select();
@@ -91,6 +104,10 @@ const StoryEdit = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleMediaUpdate = (newUrl: string) => {
+    setMediaUrl(newUrl);
   };
 
   if (isStoryLoading) {
@@ -124,7 +141,7 @@ const StoryEdit = () => {
           <ArrowLeft className="h-6 w-6 text-white" />
         </Button>
         <h1 className="text-lg font-semibold">
-          Editar {story.media_type === "image" ? "Imagem" : "Vídeo"}
+          Editar {mediaType === "image" ? "Imagem" : "Vídeo"}
         </h1>
         <div className="w-10" />
       </div>
@@ -135,8 +152,8 @@ const StoryEdit = () => {
             {/* Preview do Story */}
             <div className="mb-6">
               <MediaCarousel
-                images={story.media_type === "image" ? [story.media_url] : []}
-                videoUrls={story.media_type === "video" ? [story.media_url] : []}
+                images={mediaType === "image" ? [mediaUrl] : []}
+                videoUrls={mediaType === "video" ? [mediaUrl] : []}
                 title="Preview do Story"
                 autoplay={true}
                 showControls={true}
@@ -145,10 +162,33 @@ const StoryEdit = () => {
 
             {/* Formulário de edição */}
             <div className="space-y-4">
+              {/* Campo para alterar URL da mídia */}
+              <div className="space-y-2">
+                <Label htmlFor="media" className="text-white flex items-center gap-2">
+                  {mediaType === "image" ? <Image size={16} /> : <Video size={16} />}
+                  URL da {mediaType === "image" ? "Imagem" : "Vídeo"}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="media"
+                    value={mediaUrl}
+                    onChange={(e) => setMediaUrl(e.target.value)}
+                    placeholder={`URL da ${mediaType === "image" ? "imagem" : "vídeo"}`}
+                    className="bg-gray-900 border-gray-700 text-white flex-1"
+                  />
+                  <Button onClick={() => setIsMediaDialogOpen(true)} variant="outline" className="border-gray-700">
+                    Editar
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Altere a URL da {mediaType === "image" ? "imagem" : "vídeo"} do seu story
+                </p>
+              </div>
+
               {/* Campo para adicionar link */}
               <div className="space-y-2">
                 <Label htmlFor="link" className="text-white flex items-center gap-2">
-                  <Link size={16} />
+                  <LinkIcon size={16} />
                   Adicionar Link
                 </Label>
                 <Input
@@ -178,6 +218,15 @@ const StoryEdit = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog para editar URL da mídia */}
+      <PhotoUrlDialog
+        isOpen={isMediaDialogOpen}
+        onClose={() => setIsMediaDialogOpen(false)}
+        onConfirm={handleMediaUpdate}
+        title={`Editar URL da ${mediaType === "image" ? "Imagem" : "Vídeo"}`}
+        placeholder={`Cole a URL da ${mediaType === "image" ? "imagem" : "vídeo"} aqui`}
+      />
     </div>
   );
 };

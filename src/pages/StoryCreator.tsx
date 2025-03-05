@@ -203,10 +203,10 @@ const StoryCreator = () => {
                     </Button>
                   </div>
                   
-                  {/* Video duration indicator */}
+                  {/* Video duration indicator - Alterado de 0:30 para 1:00 */}
                   {item.type === 'video' && (
                     <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-0.5 rounded text-xs">
-                      0:30
+                      1:00
                     </div>
                   )}
                 </div>
