@@ -1,439 +1,882 @@
+import { useState, useEffect, useRef, TouchEvent } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "../integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { X, ChevronLeft, ChevronRight, Trash2, Send, MessageSquare, Heart, MoreVertical } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { toast } from "sonner";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Avatar } from '@/components/ui/avatar';
-import { supabase } from '../integrations/supabase/client';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  X, 
-  Heart, 
-  MessageCircle,
-  Share,
-  Link as LinkIcon
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import StoryComments from '@/components/StoryComments';
+interface Story {
+  id: string;
+  user_id: string;
+  media_url: string;
+  media_type: "image" | "video";
+  created_at: string;
+  expires_at: string;
+  comments_enabled?: boolean;
+  user?: {
+    username: string;
+    avatar_url: string;
+  };
+}
+
+interface StoryComment {
+  id: string;
+  story_id: string;
+  user_id: string;
+  text: string;
+  created_at: string;
+  profiles?: {
+    username: string;
+    avatar_url: string;
+  };
+}
 
 const StoryViewer = () => {
-  const { username } = useParams<{ username: string }>();
-  const [stories, setStories] = useState<any[]>([]);
+  const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const storyTimerRef = useRef<number | null>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [isPaused, setIsPaused] = useState(false);
+  const progressInterval = useRef<NodeJS.Timeout | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   
-  // Obter histórias do usuário pelo username
-  useEffect(() => {
-    const fetchStories = async () => {
-      setIsLoading(true);
-      try {
-        // Primeiro, obter o ID do usuário pelo username
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('username', username)
-          .single();
-          
-        if (userError) throw userError;
-        
-        // Depois, obter as histórias ativas desse usuário
-        const { data: storiesData, error: storiesError } = await supabase
-          .from('stories')
-          .select(`
-            *,
-            profiles:user_id (
-              username,
-              avatar_url,
-              id
-            )
-          `)
-          .eq('user_id', userData.id)
-          .gte('expires_at', new Date().toISOString())
-          .order('created_at', { ascending: false });
-          
-        if (storiesError) throw storiesError;
-        
-        if (storiesData.length === 0) {
-          toast({
-            description: "Este usuário não tem histórias ativas no momento."
-          });
-          navigate(-1);
-          return;
-        }
-        
-        setStories(storiesData);
-        
-        // Registrar visualização
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          // Verificar se já visualizou
-          const { data: existingView } = await supabase
-            .from('story_views')
-            .select('id')
-            .eq('story_id', storiesData[0].id)
-            .eq('viewer_id', session.user.id)
-            .single();
-            
-          if (!existingView) {
-            // Registrar nova visualização
-            await supabase
-              .from('story_views')
-              .insert({
-                story_id: storiesData[0].id,
-                viewer_id: session.user.id
-              });
-          }
-          
-          setCurrentUser(session.user);
-          
-          // Verificar se já curtiu
-          checkIfLiked(storiesData[0].id, session.user.id);
-        }
-        
-        // Obter contagem de curtidas
-        fetchLikesCount(storiesData[0].id);
-      } catch (error) {
-        console.error('Erro ao carregar histórias:', error);
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível carregar as histórias deste usuário."
-        });
-        navigate(-1);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchStories();
-    
-    // Limpar timer ao desmontar
-    return () => {
-      if (storyTimerRef.current) {
-        clearTimeout(storyTimerRef.current);
-      }
-    };
-  }, [username, navigate, toast]);
-  
-  // Verificar se o usuário já curtiu a história
-  const checkIfLiked = async (storyId: string, userId: string) => {
-    const { data } = await supabase
-      .from('story_likes')
-      .select('id')
-      .eq('story_id', storyId)
-      .eq('user_id', userId)
-      .single();
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  const touchStartTime = useRef<number | null>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
       
+      return user;
+    },
+  });
+
+  const { data: usersWithStories } = useQuery({
+    queryKey: ["usersWithStories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stories")
+        .select("user_id")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at");
+
+      if (error) throw error;
+      
+      const uniqueUserIds = Array.from(new Set(data.map((story: any) => story.user_id)));
+      console.log("Users with stories:", uniqueUserIds);
+      return uniqueUserIds;
+    },
+  });
+
+  const isOwner = currentUser?.id === userId;
+
+  const { data: stories, isLoading } = useQuery({
+    queryKey: ["viewStories", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+
+      const { data: userData, error: userError } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", userId)
+        .single();
+
+      if (userError) throw userError;
+
+      const { data, error } = await supabase
+        .from("stories")
+        .select("*")
+        .eq("user_id", userId)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at");
+
+      if (error) throw error;
+
+      const typedStories: Story[] = data.map((story: any) => ({
+        ...story,
+        media_type: story.media_type as "image" | "video",
+        user: userData
+      }));
+
+      return typedStories;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: comments, isLoading: isLoadingComments } = useQuery({
+    queryKey: ["storyComments", stories?.[currentStoryIndex]?.id],
+    queryFn: async () => {
+      if (!stories || stories.length === 0 || currentStoryIndex >= stories.length) return [];
+      
+      const { data, error } = await supabase
+        .from("story_comments")
+        .select("*, profiles:user_id(username, avatar_url)")
+        .eq("story_id", stories[currentStoryIndex].id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      return data as StoryComment[];
+    },
+    enabled: !!stories && stories.length > 0 && currentStoryIndex < stories.length,
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from("story_comments")
+        .delete()
+        .eq("id", commentId)
+        .eq("user_id", currentUser?.id);
+
+      if (error) throw error;
+      
+      return commentId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["storyComments", stories?.[currentStoryIndex]?.id] });
+    },
+    onError: (error) => {
+      console.error("Erro ao excluir comentário:", error);
+      toast.error("Erro ao excluir comentário");
+    }
+  });
+
+  const handleDeleteComment = (commentId: string) => {
+    if (confirm("Tem certeza que deseja excluir este comentário?")) {
+      deleteCommentMutation.mutate(commentId);
+    }
+  };
+
+  const checkUserLike = async (storyId: string) => {
+    if (!currentUser || !storyId) return;
+
+    const { data, error } = await supabase
+      .from("story_likes")
+      .select("id")
+      .eq("story_id", storyId)
+      .eq("user_id", currentUser.id)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Erro ao verificar curtida:", error);
+      return;
+    }
+
     setHasLiked(!!data);
   };
-  
-  // Obter contagem de curtidas
+
   const fetchLikesCount = async (storyId: string) => {
-    const { count } = await supabase
-      .from('story_likes')
-      .select('id', { count: 'exact' })
-      .eq('story_id', storyId);
-      
+    if (!storyId) return;
+
+    const { count, error } = await supabase
+      .from("story_likes")
+      .select("id", { count: "exact", head: true })
+      .eq("story_id", storyId);
+
+    if (error) {
+      console.error("Erro ao contar curtidas:", error);
+      return;
+    }
+
     setLikesCount(count || 0);
   };
-  
-  // Curtir ou descurtir história
-  const toggleLike = async () => {
-    if (!currentUser) {
-      toast({
-        description: "Você precisa estar logado para curtir uma história."
+
+  useEffect(() => {
+    if (!stories || stories.length === 0 || currentStoryIndex >= stories.length) return;
+    
+    const storyId = stories[currentStoryIndex].id;
+    checkUserLike(storyId);
+    fetchLikesCount(storyId);
+    setShowComments(false);
+    setIsPaused(false);
+  }, [currentStoryIndex, stories, currentUser]);
+
+  const markAsViewedMutation = useMutation({
+    mutationFn: async (storyId: string) => {
+      if (!currentUser || isOwner) return;
+
+      const { error } = await supabase
+        .from("story_views")
+        .upsert({
+          story_id: storyId,
+          viewer_id: currentUser.id,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userStories"] });
+      queryClient.invalidateQueries({ queryKey: ["followingWithStories"] });
+    },
+  });
+
+  const toggleLikeMutation = useMutation({
+    mutationFn: async (storyId: string) => {
+      if (!currentUser) return;
+
+      if (hasLiked) {
+        const { error } = await supabase
+          .from("story_likes")
+          .delete()
+          .eq("story_id", storyId)
+          .eq("user_id", currentUser.id);
+
+        if (error) throw error;
+        
+        return { action: 'unlike' };
+      } else {
+        const { error } = await supabase
+          .from("story_likes")
+          .insert({
+            story_id: storyId,
+            user_id: currentUser.id,
+          });
+
+        if (error) throw error;
+        
+        return { action: 'like' };
+      }
+    },
+    onSuccess: (data, storyId) => {
+      setHasLiked(!hasLiked);
+      setLikesCount(prev => data?.action === 'like' ? prev + 1 : prev - 1);
+      
+      queryClient.invalidateQueries({ queryKey: ["storyLikes", storyId] });
+    },
+    onError: (error) => {
+      console.error("Erro ao curtir/descurtir:", error);
+      toast.error("Erro ao processar sua curtida");
+    }
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: async ({ storyId, text }: { storyId: string, text: string }) => {
+      if (!currentUser) throw new Error("Usuário não autenticado");
+
+      const { data, error } = await supabase
+        .from("story_comments")
+        .insert({
+          story_id: storyId,
+          user_id: currentUser.id,
+          text: text,
+        })
+        .select("*, profiles:user_id(username, avatar_url)")
+        .single();
+
+      if (error) throw error;
+      
+      return data as StoryComment;
+    },
+    onSuccess: () => {
+      setCommentText("");
+      queryClient.invalidateQueries({ queryKey: ["storyComments", stories?.[currentStoryIndex]?.id] });
+    },
+    onError: (error) => {
+      console.error("Erro ao adicionar comentário:", error);
+      toast.error("Erro ao adicionar comentário");
+    }
+  });
+
+  const deleteStoryMutation = useMutation({
+    mutationFn: async (storyId: string) => {
+      const { error } = await supabase
+        .from("stories")
+        .delete()
+        .eq("id", storyId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userStories"] });
+      queryClient.invalidateQueries({ queryKey: ["viewStories"] });
+      queryClient.invalidateQueries({ queryKey: ["followingWithStories"] }); 
+      toast.success("História excluída com sucesso");
+      
+      if (stories && stories.length <= 1) {
+        navigate("/");
+      } else {
+        if (currentStoryIndex >= stories.length - 1) {
+          setCurrentStoryIndex(stories.length - 2);
+        }
+      }
+    },
+    onError: (error) => {
+      console.error("Error deleting story:", error);
+      toast.error("Erro ao excluir história");
+    },
+  });
+
+  const isCommentingAllowed = () => {
+    if (!stories || stories.length === 0 || currentStoryIndex >= stories.length) return false;
+    
+    return stories[currentStoryIndex].comments_enabled !== false;
+  };
+
+  useEffect(() => {
+    if (isLoading || !stories || stories.length === 0) return;
+
+    if (progressInterval.current) {
+      clearInterval(progressInterval.current);
+      progressInterval.current = null;
+    }
+
+    if (stories[currentStoryIndex]) {
+      markAsViewedMutation.mutate(stories[currentStoryIndex].id);
+    }
+
+    if (videoRef.current && stories[currentStoryIndex]?.media_type === 'video') {
+      setProgress(0);
+      return;
+    }
+
+    if (showComments || isPaused) {
+      return;
+    }
+
+    const duration = 5000;
+    const interval = 50;
+    const step = (interval / duration) * 100;
+    
+    setProgress(0);
+    
+    progressInterval.current = setInterval(() => {
+      setProgress((prev) => {
+        const newProgress = prev + step;
+        if (newProgress >= 100) {
+          goToNextStory();
+          return 0;
+        }
+        return newProgress;
       });
+    }, interval);
+
+    return () => {
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+        progressInterval.current = null;
+      }
+    };
+  }, [currentStoryIndex, isLoading, stories, showComments, isPaused]);
+
+  const handleVideoProgress = () => {
+    if (!videoRef.current) return;
+    
+    const { currentTime, duration } = videoRef.current;
+    const calculatedProgress = (currentTime / duration) * 100;
+    setProgress(calculatedProgress);
+  };
+
+  const handleVideoEnded = () => {
+    goToNextStory();
+  };
+
+  const goToNextStory = () => {
+    if (!stories || stories.length === 0) return;
+    
+    if (currentStoryIndex < stories.length - 1) {
+      setCurrentStoryIndex(currentStoryIndex + 1);
+    } else {
+      goToNextUser();
+    }
+  };
+
+  const goToPrevUser = () => {
+    if (!usersWithStories || !userId) return;
+    
+    const currentUserIndex = usersWithStories.indexOf(userId);
+    console.log("Current user index:", currentUserIndex);
+    
+    if (currentUserIndex > 0) {
+      const prevUserId = usersWithStories[currentUserIndex - 1];
+      console.log("Going to previous user:", prevUserId);
+      navigate(`/story/view/${prevUserId}`);
+    } else {
+      console.log("No previous user, going back");
+      navigate(-1);
+    }
+  };
+
+  const goToNextUser = () => {
+    if (!usersWithStories || !userId) return;
+    
+    const currentUserIndex = usersWithStories.indexOf(userId);
+    console.log("Current user index:", currentUserIndex, "Total users:", usersWithStories.length);
+    
+    if (currentUserIndex !== -1 && currentUserIndex < usersWithStories.length - 1) {
+      const nextUserId = usersWithStories[currentUserIndex + 1];
+      console.log("Going to next user:", nextUserId);
+      navigate(`/story/view/${nextUserId}`);
+      setCurrentStoryIndex(0);
+      setProgress(0);
+    } else {
+      console.log("No next user, going back");
+      navigate("/");
+    }
+  };
+
+  const goToPrevStory = () => {
+    if (currentStoryIndex > 0) {
+      setCurrentStoryIndex(currentStoryIndex - 1);
+    } else {
+      goToPrevUser();
+    }
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+    
+    longPressTimer.current = setTimeout(() => {
+      if (!isPaused) {
+        setIsPaused(true);
+        if (videoRef.current && videoRef.current.paused === false) {
+          videoRef.current.pause();
+        }
+        if (progressInterval.current) {
+          clearInterval(progressInterval.current);
+          progressInterval.current = null;
+        }
+      }
+    }, 200);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+    
+    if (touchStartX.current && touchEndX.current && touchStartY.current && touchEndY.current) {
+      const xDiff = Math.abs(touchStartX.current - touchEndX.current);
+      const yDiff = Math.abs(touchStartY.current - touchEndY.current);
+      if (xDiff > 10 || yDiff > 10) {
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    
+    if (!touchStartX.current || !touchEndX.current || !touchStartY.current || !touchEndY.current) {
       return;
     }
     
-    const currentStory = stories[currentStoryIndex];
+    const horizontalDistance = touchStartX.current - touchEndX.current;
+    const verticalDistance = touchStartY.current - touchEndY.current;
     
-    try {
-      if (hasLiked) {
-        // Remover curtida
-        await supabase
-          .from('story_likes')
-          .delete()
-          .eq('story_id', currentStory.id)
-          .eq('user_id', currentUser.id);
-          
-        setHasLiked(false);
-        setLikesCount(prev => prev - 1);
-      } else {
-        // Adicionar curtida
-        await supabase
-          .from('story_likes')
-          .insert({
-            story_id: currentStory.id,
-            user_id: currentUser.id
-          });
-          
-        setHasLiked(true);
-        setLikesCount(prev => prev + 1);
+    if (Math.abs(horizontalDistance) > Math.abs(verticalDistance)) {
+      if (Math.abs(horizontalDistance) > 50) {
+        if (horizontalDistance > 0) {
+          goToNextStory();
+        } else {
+          goToPrevStory();
+        }
       }
-    } catch (error) {
-      console.error('Erro ao curtir/descurtir:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível processar sua ação."
-      });
+    }
+    
+    touchStartX.current = null;
+    touchEndX.current = null;
+    touchStartY.current = null;
+    touchEndY.current = null;
+    touchStartTime.current = null;
+  };
+
+  const handleDeleteStory = () => {
+    if (!stories) return;
+    
+    if (confirm("Tem certeza que deseja excluir esta história?")) {
+      deleteStoryMutation.mutate(stories[currentStoryIndex].id);
     }
   };
-  
-  // Compartilhar história
-  const shareStory = async () => {
-    const currentStory = stories[currentStoryIndex];
-    const shareUrl = `${window.location.origin}/stories/${username}`;
+
+  const handleLikeStory = () => {
+    if (!stories || !currentUser) return;
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `História de ${username}`,
-          text: `Confira a história de ${username}!`,
-          url: shareUrl
-        });
-      } catch (error) {
-        console.error('Erro ao compartilhar:', error);
-      }
-    } else {
-      // Copiar link para área de transferência
-      navigator.clipboard.writeText(shareUrl);
-      toast({
-        description: "Link copiado para a área de transferência!"
-      });
-    }
+    toggleLikeMutation.mutate(stories[currentStoryIndex].id);
   };
-  
-  // Navegar para próxima história
-  const goToNextStory = () => {
-    if (currentStoryIndex < stories.length - 1) {
-      setCurrentStoryIndex(prev => prev + 1);
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim() || !stories || !currentUser) return;
+    
+    addCommentMutation.mutate({
+      storyId: stories[currentStoryIndex].id,
+      text: commentText.trim()
+    });
+  };
+
+  const toggleComments = () => {
+    setShowComments(!showComments);
+    
+    if (!showComments) {
+      setIsPaused(true);
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+      }
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+        progressInterval.current = null;
+      }
       
-      // Resetar estados para nova história
-      const nextStory = stories[currentStoryIndex + 1];
-      if (currentUser) {
-        checkIfLiked(nextStory.id, currentUser.id);
+      setTimeout(() => {
+        commentInputRef.current?.focus();
+      }, 300);
+    } else {
+      setIsPaused(false);
+      if (videoRef.current && videoRef.current.paused) {
+        videoRef.current.play();
+      }
+      
+      if (!progressInterval.current && !isPaused) {
+        const duration = 5000;
+        const interval = 50;
+        const step = (interval / duration) * 100;
         
-        // Registrar visualização se ainda não visualizou
-        supabase
-          .from('story_views')
-          .select('id')
-          .eq('story_id', nextStory.id)
-          .eq('viewer_id', currentUser.id)
-          .single()
-          .then(({ data: existingView }) => {
-            if (!existingView) {
-              supabase
-                .from('story_views')
-                .insert({
-                  story_id: nextStory.id,
-                  viewer_id: currentUser.id
-                });
+        progressInterval.current = setInterval(() => {
+          setProgress((prev) => {
+            const newProgress = prev + step;
+            if (newProgress >= 100) {
+              goToNextStory();
+              return 0;
             }
+            return newProgress;
           });
+        }, interval);
       }
-      
-      fetchLikesCount(nextStory.id);
-      setShowComments(false);
-    } else {
-      // Fim das histórias, voltar
-      navigate(-1);
     }
   };
   
-  // Navegar para história anterior
-  const goToPreviousStory = () => {
-    if (currentStoryIndex > 0) {
-      setCurrentStoryIndex(prev => prev - 1);
+  const handleCloseComments = () => {
+    setShowComments(false);
+    
+    setIsPaused(false);
+    if (videoRef.current && videoRef.current.paused) {
+      videoRef.current.play();
+    }
+    
+    if (!progressInterval.current && !isPaused) {
+      const duration = 5000;
+      const interval = 50;
+      const step = (interval / duration) * 100;
       
-      // Resetar estados para nova história
-      const prevStory = stories[currentStoryIndex - 1];
-      if (currentUser) {
-        checkIfLiked(prevStory.id, currentUser.id);
-      }
-      
-      fetchLikesCount(prevStory.id);
-      setShowComments(false);
-    } else {
-      // Primeira história, voltar à navegação
-      navigate(-1);
+      progressInterval.current = setInterval(() => {
+        setProgress((prev) => {
+          const newProgress = prev + step;
+          if (newProgress >= 100) {
+            goToNextStory();
+            return 0;
+          }
+          return newProgress;
+        });
+      }, interval);
     }
   };
-  
-  // Fecha o visualizador
-  const closeViewer = () => {
-    navigate(-1);
-  };
-  
-  if (isLoading || stories.length === 0) {
+
+  if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-white border-t-transparent rounded-full"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white"></div>
       </div>
     );
   }
-  
+
+  if (!stories || stories.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white">
+        <p className="text-xl mb-4">Não há histórias para mostrar</p>
+        <Button onClick={() => navigate(-1)}>Voltar</Button>
+      </div>
+    );
+  }
+
   const currentStory = stories[currentStoryIndex];
-  
+
   return (
-    <div className="fixed inset-0 bg-black flex flex-col">
-      {/* Barra de progresso */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex px-2 pt-2 gap-1">
+    <div 
+      className="fixed inset-0 bg-black flex flex-col story-viewer-container"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="absolute top-0 left-0 right-0 z-10 p-2 flex gap-1">
         {stories.map((_, index) => (
-          <div 
-            key={index} 
-            className={`h-1 flex-1 rounded-full ${
-              index < currentStoryIndex 
-                ? 'bg-white' 
-                : index === currentStoryIndex 
-                ? 'bg-gray-300' 
-                : 'bg-gray-700'
-            }`}
-          ></div>
+          <div key={index} className="h-1 bg-gray-600 flex-1 rounded-full overflow-hidden">
+            <div 
+              className={`h-full bg-white transition-all duration-100 ease-linear ${index < currentStoryIndex ? 'w-full' : index === currentStoryIndex ? '' : 'w-0'}`}
+              style={{ width: index === currentStoryIndex ? `${progress}%` : index < currentStoryIndex ? '100%' : '0%' }}
+            ></div>
+          </div>
         ))}
       </div>
-      
-      {/* Cabeçalho */}
-      <div className="absolute top-4 left-0 right-0 z-10 flex items-center justify-between px-4">
-        <div className="flex items-center space-x-2">
-          <Avatar className="h-8 w-8 border border-white">
-            {currentStory.profiles.avatar_url && (
-              <img 
-                src={currentStory.profiles.avatar_url} 
-                alt={currentStory.profiles.username} 
-              />
-            )}
+
+      <div className="absolute top-4 left-0 right-0 z-10 px-4 pt-4">
+        <div className="flex items-center">
+          {isOwner && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white mr-2" 
+              onClick={() => navigate("/story/manage")}
+            >
+              <MoreVertical className="h-6 w-6" />
+            </Button>
+          )}
+          <Avatar className="h-10 w-10 mr-3 border border-white">
+            <AvatarImage 
+              src={currentStory.user?.avatar_url || undefined} 
+              alt={currentStory.user?.username || "Usuário"} 
+            />
+            <AvatarFallback>
+              {currentStory.user?.username?.charAt(0).toUpperCase() || "U"}
+            </AvatarFallback>
           </Avatar>
-          <div>
-            <span className="text-white text-sm font-semibold">
-              {currentStory.profiles.username}
-            </span>
+          <div className="flex-1">
+            <p className="text-white font-medium">
+              {currentStory.user?.username || "Usuário"}
+            </p>
             <p className="text-gray-300 text-xs">
-              {formatDistanceToNow(new Date(currentStory.created_at), {
-                addSuffix: true,
-                locale: ptBR
-              })}
+              {new Date(currentStory.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </p>
           </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white story-exit-button" 
+            onClick={() => navigate("/")}
+          >
+            <X className="h-6 w-6" />
+          </Button>
         </div>
-        
-        <button 
-          onClick={closeViewer}
-          className="text-white rounded-full p-1"
-        >
-          <X className="h-6 w-6" />
-        </button>
       </div>
-      
-      {/* Conteúdo da história */}
+
       <div className="flex-1 flex items-center justify-center">
-        {currentStory.media_type === 'image' ? (
-          <img 
-            src={currentStory.media_url} 
-            alt="Story" 
-            className="max-h-full max-w-full object-contain"
-          />
-        ) : currentStory.media_type === 'video' ? (
-          <video 
-            src={currentStory.media_url} 
-            controls 
-            autoPlay 
+        {currentStory.media_type === 'video' ? (
+          <video
+            ref={videoRef}
+            src={currentStory.media_url}
+            className="max-h-screen max-w-full object-contain"
+            autoPlay
             playsInline
-            className="max-h-full max-w-full object-contain"
+            onTimeUpdate={handleVideoProgress}
+            onEnded={handleVideoEnded}
+            controls={false}
           />
         ) : (
-          <div className="flex items-center justify-center h-full w-full p-4">
-            <p className="text-white text-center text-lg">{currentStory.media_url}</p>
-          </div>
+          <img
+            src={currentStory.media_url}
+            alt="Story"
+            className="max-h-screen max-w-full object-contain"
+          />
         )}
       </div>
-      
-      {/* Navegação lateral */}
-      <button 
-        className="absolute left-0 top-0 bottom-0 w-1/4 z-0"
-        onClick={goToPreviousStory}
+
+      <div className="absolute bottom-4 left-0 right-0 flex justify-between px-4 opacity-0 hover:opacity-100 transition-opacity">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-white" 
+          onClick={goToPrevStory}
+          disabled={currentStoryIndex === 0 && usersWithStories?.indexOf(userId as string) === 0}
+        >
+          <ChevronLeft className="h-8 w-8" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-white" 
+          onClick={goToNextStory}
+        >
+          <ChevronRight className="h-8 w-8" />
+        </Button>
+      </div>
+
+      <div 
+        className={`absolute bottom-0 left-0 right-0 bg-black dark:bg-black backdrop-blur-none rounded-t-3xl transition-all duration-300 ease-in-out overflow-hidden story-comments-area ${
+          showComments ? 'h-[60vh]' : 'h-0'
+        }`}
       >
-        <ChevronLeft className="h-8 w-8 text-white/50 absolute left-2 top-1/2 transform -translate-y-1/2" />
-      </button>
-      
-      <button 
-        className="absolute right-0 top-0 bottom-0 w-1/4 z-0"
-        onClick={goToNextStory}
-      >
-        <ChevronRight className="h-8 w-8 text-white/50 absolute right-2 top-1/2 transform -translate-y-1/2" />
-      </button>
-      
-      {/* Barra de ações */}
-      <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-3 z-20 ${showComments ? 'pb-0' : ''}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="p-4 h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-1 bg-gray-500 dark:bg-gray-700 rounded-full mx-auto"></div>
             <Button 
               variant="ghost" 
-              size="sm" 
-              className="text-white" 
-              onClick={toggleLike}
+              size="icon" 
+              className="absolute right-4 top-4 text-gray-300 hover:text-white"
+              onClick={handleCloseComments}
             >
-              <Heart 
-                className={`h-6 w-6 mr-1 ${hasLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} 
-              />
-              {likesCount > 0 && <span>{likesCount}</span>}
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-white" 
-              onClick={() => setShowComments(!showComments)}
-            >
-              <MessageCircle className="h-6 w-6 mr-1" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-white" 
-              onClick={shareStory}
-            >
-              <Share className="h-6 w-6 mr-1" />
-            </Button>
-            
-            {currentStory.link_url && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-white"
-                onClick={() => window.open(currentStory.link_url, '_blank')}
-              >
-                <LinkIcon className="h-6 w-6 mr-1" />
-                <span className="text-sm">Link</span>
-              </Button>
+          <h3 className="text-white font-semibold mb-4">Comentários</h3>
+          
+          <div className="flex-1 overflow-y-auto">
+            {!isCommentingAllowed() ? (
+              <div className="text-center text-gray-400 py-8">
+                Comentários desativados para este story
+              </div>
+            ) : isLoadingComments ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+              </div>
+            ) : comments && comments.length > 0 ? (
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage 
+                        src={comment.profiles?.avatar_url || undefined} 
+                        alt={comment.profiles?.username || "Usuário"} 
+                      />
+                      <AvatarFallback>
+                        {comment.profiles?.username?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="bg-gray-900 rounded-2xl px-4 py-3 flex-1">
+                      <div className="flex justify-between items-center">
+                        <p className="text-white text-sm font-medium">
+                          {comment.profiles?.username || "Usuário"}
+                        </p>
+                        {currentUser && comment.user_id === currentUser.id && (
+                          <Button 
+                            onClick={() => handleDeleteComment(comment.id)}
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 text-gray-400 hover:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-gray-200 text-sm mt-1">{comment.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-8">
+                Sem comentários ainda
+              </div>
             )}
           </div>
+          
+          {isCommentingAllowed() && (
+            <form onSubmit={handleAddComment} className="mt-4 flex items-center gap-2">
+              <Avatar className="h-8 w-8 shrink-0">
+                {currentUser && (
+                  <>
+                    <AvatarImage 
+                      src={currentUser.user_metadata?.avatar_url || undefined} 
+                      alt={currentUser.user_metadata?.full_name || "Você"} 
+                    />
+                    <AvatarFallback>
+                      {currentUser.user_metadata?.full_name?.charAt(0).toUpperCase() || "V"}
+                    </AvatarFallback>
+                  </>
+                )}
+              </Avatar>
+              <Input
+                ref={commentInputRef}
+                type="text"
+                placeholder="Adicione um comentário..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="flex-1 bg-gray-900 border-none text-white rounded-full placeholder:text-gray-400"
+              />
+              <Button 
+                type="submit" 
+                size="icon" 
+                variant="ghost" 
+                className="text-white"
+                disabled={!commentText.trim()}
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </form>
+          )}
         </div>
-        
-        {/* Área de comentários */}
-        {showComments && (
-          <div className="bg-white dark:bg-gray-900 rounded-t-xl mt-2 p-4 max-h-[70vh] overflow-y-auto">
-            <StoryComments 
-              storyId={currentStory.id} 
-              storyOwnerId={currentStory.profiles.id}
-              commentsEnabled={currentStory.comments_enabled !== false}
-            />
-          </div>
-        )}
       </div>
+
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-black story-comment-bar">
+        <div className="px-4 py-3 flex items-center">
+          {isCommentingAllowed() ? (
+            <>
+              <button 
+                className="flex items-center justify-center mr-4"
+                onClick={toggleComments}
+              >
+                <img 
+                  src="/comentario.png" 
+                  alt="Comentar" 
+                  className="h-7 w-7"
+                />
+              </button>
+              
+              <div className="flex-1">
+                <form onSubmit={handleAddComment} className="flex items-center">
+                  <Input
+                    type="text"
+                    placeholder="Enviar mensagem"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    className="bg-gray-900 border-0 text-white rounded-full placeholder:text-gray-400"
+                    onClick={() => setShowComments(true)}
+                  />
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 px-4 py-1">
+              <p className="text-gray-400 text-sm">Comentários desativados</p>
+            </div>
+          )}
+          
+          <button 
+            className="flex items-center justify-center ml-4"
+            onClick={handleLikeStory}
+          >
+            <img 
+              src={hasLiked ? "/amei1.png" : "/curtidas.png"} 
+              alt={hasLiked ? "Amei" : "Curtir"} 
+              className="h-7 w-7"
+            />
+          </button>
+        </div>
+      </div>
+
+      {isOwner && (
+        <div className="absolute bottom-20 right-4">
+          <Button 
+            variant="destructive" 
+            size="icon" 
+            onClick={handleDeleteStory}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

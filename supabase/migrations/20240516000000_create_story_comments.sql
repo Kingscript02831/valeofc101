@@ -5,7 +5,6 @@ create table if not exists public.story_comments (
   story_id uuid references public.stories(id) on delete cascade not null,
   user_id uuid references public.profiles(id) on delete cascade not null,
   text text not null,
-  parent_comment_id uuid references public.story_comments(id) on delete cascade,
   created_at timestamp with time zone default now() not null
 );
 
@@ -28,15 +27,3 @@ create policy "Usuários podem atualizar seus próprios comentários"
 create policy "Usuários podem excluir seus próprios comentários"
   on story_comments for delete
   using (auth.uid() = user_id);
-
--- Permitir que o dono da story exclua qualquer comentário
-create policy "Donos de stories podem excluir qualquer comentário"
-  on story_comments for delete
-  using (
-    auth.uid() IN (
-      SELECT profiles.id 
-      FROM profiles 
-      JOIN stories ON stories.user_id = profiles.id 
-      WHERE stories.id = story_comments.story_id
-    )
-  );

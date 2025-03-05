@@ -1510,7 +1510,6 @@ export type Database = {
       }
       stories: {
         Row: {
-          comments_enabled: boolean | null
           created_at: string
           expires_at: string
           id: string
@@ -1520,7 +1519,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          comments_enabled?: boolean | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -1530,7 +1528,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          comments_enabled?: boolean | null
           created_at?: string
           expires_at?: string
           id?: string
