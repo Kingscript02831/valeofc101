@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -39,7 +38,7 @@ export interface Profile {
   created_at?: string | null;
 }
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -117,6 +116,26 @@ export interface Database {
           }
         ];
       };
+      locations: {
+        Row: {
+          id: string;
+          name: string;
+          state: string;
+          created_at: string;
+        }
+        Insert: {
+          id?: string;
+          name: string;
+          state: string;
+          created_at?: string;
+        }
+        Update: {
+          id?: string;
+          name?: string;
+          state?: string;
+          created_at?: string;
+        }
+      };
       site_configuration: {
         Row: {
           id: string;
@@ -179,6 +198,57 @@ export interface Database {
           pwa_app_icon: string | null
         }
       }
+      events: {
+        Row: {
+          id: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          location_id: string;
+          created_at: string;
+        }
+        Insert: {
+          id?: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          location_id: string;
+          created_at?: string;
+        }
+        Update: {
+          id?: string;
+          name?: string;
+          start_date?: string;
+          end_date?: string;
+          location_id?: string;
+          created_at?: string;
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          }
+        ]
+      }
+      categories: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string;
+        }
+        Insert: {
+          id?: string;
+          name: string;
+          created_at?: string;
+        }
+        Update: {
+          id?: string;
+          name?: string;
+          created_at?: string;
+        }
+      }
       stories: {
         Row: {
           id: string;
@@ -187,8 +257,9 @@ export interface Database {
           media_type: string;
           created_at: string;
           expires_at: string;
-          link_url?: string | null;
-        };
+          link_url?: string;
+          comments_enabled?: boolean;
+        }
         Insert: {
           id?: string;
           user_id: string;
@@ -196,8 +267,8 @@ export interface Database {
           media_type: string;
           created_at?: string;
           expires_at?: string;
-          link_url?: string | null;
-        };
+          link_url?: string;
+        }
         Update: {
           id?: string;
           user_id?: string;
@@ -205,8 +276,8 @@ export interface Database {
           media_type?: string;
           created_at?: string;
           expires_at?: string;
-          link_url?: string | null;
-        };
+          link_url?: string;
+        }
         Relationships: [
           {
             foreignKeyName: "stories_user_id_fkey";
@@ -214,72 +285,39 @@ export interface Database {
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           }
-        ];
+        ]
       };
+      story_comments: {
+        Row: {
+          id: string;
+          story_id: string;
+          user_id: string;
+          text: string;
+          parent_comment_id?: string;
+          created_at: string;
+        }
+      }
+      story_likes: {
+        Row: {
+          id: string;
+          story_id: string;
+          user_id: string;
+          created_at: string;
+        }
+      }
       story_views: {
         Row: {
           id: string;
           story_id: string;
           viewer_id: string;
           viewed_at: string;
-        };
-        Insert: {
-          id?: string;
-          story_id: string;
-          viewer_id: string;
-          viewed_at?: string;
-        };
-        Update: {
-          id?: string;
-          story_id?: string;
-          viewer_id?: string;
-          viewed_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "story_views_story_id_fkey";
-            columns: ["story_id"];
-            referencedRelation: "stories";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "story_views_viewer_id_fkey";
-            columns: ["viewer_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      post_reactions: {
-        Row: {
-          id: string;
-          post_id: string;
-          user_id: string;
-          reaction_type: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          post_id: string;
-          user_id: string;
-          reaction_type: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          post_id?: string;
-          user_id?: string;
-          reaction_type?: string;
-          created_at?: string;
-        };
-      };
-      // Add other tables as needed
-    };
-    Functions: {
-      [key: string]: unknown;
-    };
-    Enums: {
-      [key: string]: unknown;
-    };
-  };
+        }
+      }
+    }
+  }
+}
+
+export interface InstagramMedia {
+  url: string;
+  type: 'post' | 'video';
 }
