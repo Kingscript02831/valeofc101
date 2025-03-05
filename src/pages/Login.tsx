@@ -147,13 +147,6 @@ const Login = () => {
           <p className="mt-6 text-center text-sm text-gray-400">
             Não possui uma conta? <Link to="/signup" className="hover:underline" style={linkColorStyle}>Criar conta</Link>
           </p>
-          
-          {/* Quote section moved below the create account link */}
-          <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm">
-            <p className="text-white/90 text-sm italic mb-2">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
-            <p className="text-white/90 text-sm font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
-            <p className="text-white/70 text-xs">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
-          </div>
         </div>
         
         <p className="mt-8 text-sm text-gray-500">

@@ -83,13 +83,6 @@ const ResetPassword = () => {
               >
                 <Link to="/login">Voltar para o Login</Link>
               </Button>
-              
-              {/* Quote section added for the success state */}
-              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm">
-                <p className="text-white/90 text-sm italic mb-2">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
-                <p className="text-white/90 text-sm font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
-                <p className="text-white/70 text-xs">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
-              </div>
             </div>
           ) : (
             <>
@@ -125,13 +118,6 @@ const ResetPassword = () => {
                   </Link>
                 </div>
               </form>
-              
-              {/* Quote section moved below the back to login link */}
-              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm">
-                <p className="text-white/90 text-sm italic mb-2">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
-                <p className="text-white/90 text-sm font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
-                <p className="text-white/70 text-xs">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
-              </div>
             </>
           )}
         </div>
