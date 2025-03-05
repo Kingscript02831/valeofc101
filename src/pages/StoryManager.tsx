@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -168,11 +169,16 @@ const StoryManager = () => {
     );
   };
 
+  // Function to exit the app
+  const exitApp = () => {
+    window.location.href = 'https://valeofc.glideapp.io/';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background pt-14 pb-20">
       {/* Cabeçalho fixo */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white/90 dark:bg-black/90 backdrop-blur">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="icon" onClick={exitApp}>
           <ArrowLeft className="h-6 w-6" />
         </Button>
         <h1 className="text-lg font-semibold">Seus Stories</h1>
