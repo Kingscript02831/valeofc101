@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Plus, ChevronRight, ChevronLeft } from "lucide-react";
+import { Plus } from "lucide-react";
 import { transformDropboxUrl } from "../utils/mediaUtils";
-import { useRef } from "react";
 
 interface FollowingProfile {
   id: string;
@@ -18,7 +17,6 @@ interface FollowingProfile {
 
 const StoriesBar = () => {
   const navigate = useNavigate();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
@@ -116,36 +114,13 @@ const StoriesBar = () => {
     }
   };
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 200; // Adjust scroll amount as needed
-      const newScrollLeft = direction === 'left' 
-        ? scrollContainerRef.current.scrollLeft - scrollAmount
-        : scrollContainerRef.current.scrollLeft + scrollAmount;
-      
-      scrollContainerRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth'
-      });
-    }
-  };
-
   return (
-    <div className="bg-black w-full py-4 relative">
-      {/* Scroll left button */}
-      <button 
-        onClick={() => scroll('left')}
-        className="absolute left-1 top-1/2 -translate-y-1/2 z-10 bg-black/60 text-white rounded-full p-1"
-        aria-label="Scroll left"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      
-      <div className="overflow-x-auto scrollbar-hide" ref={scrollContainerRef}>
-        <div className="flex space-x-4 px-4">
+    <div className="bg-black w-full py-4">
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="grid grid-cols-2 gap-4 px-4">
           {currentUser && (
             <div 
-              className="flex flex-col items-center cursor-pointer min-w-16"
+              className="flex flex-col items-center cursor-pointer"
               onClick={() => handleStoryClick(currentUser.id)}
             >
               <div className="relative">
@@ -167,7 +142,7 @@ const StoriesBar = () => {
           {followingWithStories?.map((profile) => (
             <div 
               key={profile.id}
-              className="flex flex-col items-center cursor-pointer min-w-16"
+              className="flex flex-col items-center cursor-pointer"
               onClick={() => handleStoryClick(profile.id)}
             >
               <Avatar 
@@ -189,7 +164,7 @@ const StoriesBar = () => {
           {isLoading && (
             <>
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex flex-col items-center min-w-16">
+                <div key={i} className="flex flex-col items-center">
                   <div className="w-16 h-16 rounded-full bg-gray-700 animate-pulse"></div>
                   <div className="w-12 h-2 mt-1 bg-gray-700 animate-pulse rounded"></div>
                 </div>
@@ -204,15 +179,6 @@ const StoriesBar = () => {
           )}
         </div>
       </div>
-      
-      {/* Scroll right button */}
-      <button 
-        onClick={() => scroll('right')}
-        className="absolute right-1 top-1/2 -translate-y-1/2 z-10 bg-black/60 text-white rounded-full p-1"
-        aria-label="Scroll right"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
     </div>
   );
 };
