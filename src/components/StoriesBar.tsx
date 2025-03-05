@@ -107,21 +107,22 @@ const StoriesBar = () => {
   });
 
   const handleStoryClick = (userId: string) => {
-    if (userId === currentUser?.id) {
-      navigate("/story/manage");
-    } else {
-      navigate(`/story/view/${userId}`);
-    }
+    navigate(`/story/view/${userId}`);
+  };
+
+  const handleCreateStoryClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the parent click event
+    navigate("/story/creator");
   };
 
   return (
     <div className="bg-black w-full py-4">
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="grid grid-cols-2 gap-4 px-4">
+      <div className="overflow-x-auto no-scrollbar">
+        <div className="flex gap-4 px-4" style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}>
           {currentUser && (
             <div 
               className="flex flex-col items-center cursor-pointer"
-              onClick={() => handleStoryClick(currentUser.id)}
+              onClick={() => navigate(`/story/view/${currentUser.id}`)}
             >
               <div className="relative">
                 <Avatar className="w-16 h-16 border-2 border-gray-600">
@@ -131,7 +132,10 @@ const StoriesBar = () => {
                     <AvatarFallback>{currentUser.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                   )}
                 </Avatar>
-                <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1">
+                <div 
+                  className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 cursor-pointer"
+                  onClick={handleCreateStoryClick}
+                >
                   <Plus className="h-4 w-4 text-white" />
                 </div>
               </div>
@@ -173,7 +177,7 @@ const StoriesBar = () => {
           )}
           
           {!isLoading && (!followingWithStories || followingWithStories.length === 0) && !currentUser && (
-            <div className="flex items-center justify-center w-full col-span-2 py-2">
+            <div className="flex items-center justify-center w-full py-2">
               <p className="text-xs text-gray-400">Entre para ver stories</p>
             </div>
           )}
