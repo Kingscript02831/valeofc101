@@ -1,51 +1,47 @@
 
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../integrations/supabase/client";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { toast } from "sonner";
-import { useSiteConfig } from "../hooks/useSiteConfig";
-import { translateAuthError } from "../utils/auth-errors";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { getAuthErrorMessage } from "@/utils/auth-errors";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useSiteConfig();
+  const [useBackgroundImage, setUseBackgroundImage] = useState(true);
 
-  useEffect(() => {
-    const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) {
-        navigate("/");
-      }
-    };
-    getSession();
-  }, [navigate]);
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) throw error;
-      toast.success("Login realizado com sucesso!");
-      navigate("/");
+
+      if (error) {
+        toast.error(getAuthErrorMessage(error.message));
+      } else {
+        toast.success('Login efetuado com sucesso!');
+        navigate('/');
+      }
     } catch (error: any) {
-      const errorMessage = translateAuthError(error.message);
-      toast.error(errorMessage);
+      toast.error('Erro ao efetuar login');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleShowPassword = () => {
+  const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
@@ -55,117 +51,130 @@ const Login = () => {
 
   // Variable for the link color that matches the button color
   const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
+  
+  // Background style based on user preference
+  const backgroundStyle = useBackgroundImage && config?.login_background_image
+    ? { 
+        backgroundImage: `url(${config.login_background_image})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }
+    : { backgroundColor: '#000000' };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Left side with image and quote */}
-      <div className="relative flex-1 hidden md:flex flex-col justify-between bg-gradient-to-r from-purple-800 to-purple-900 overflow-hidden">
-        {config?.login_background_image ? (
-          <div className="absolute inset-0 z-0">
-            <img
-              src={config.login_background_image}
-              alt="Login"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
-          </div>
-        ) : (
-          <div className="absolute inset-0 z-0">
-            <img
-              src="/lovable-uploads/587a2669-ca00-4bd7-a223-008d7d9ace86.png"
-              alt="Login"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
-          </div>
-        )}
-        <div className="relative z-10 flex flex-col justify-between h-full p-12">
-          <div></div>
-          <div className="bg-black/30 p-6 rounded-2xl backdrop-blur-sm">
-            <p className="text-white text-lg font-medium mb-4">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
-            <p className="text-white font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
-            <p className="text-white/70 text-sm">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
-          </div>
+      {/* Left side - Background image or color with quote */}
+      <div 
+        className="hidden md:flex md:w-1/2 flex-col justify-center items-center p-10 text-white relative"
+        style={backgroundStyle}
+      >
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div className="z-10 max-w-md text-center">
+          <blockquote className="mb-6 italic text-lg">
+            "{config?.login_quote_text || "No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."}"
+          </blockquote>
+          <cite className="block text-sm font-medium">
+            {config?.login_quote_author || "Jaron Lanier"}
+            <span className="block mt-1 text-sm opacity-75 font-normal">
+              {config?.login_quote_author_title || "Cientista da computação e especialista em realidade virtual."}
+            </span>
+          </cite>
+        </div>
+        <div className="absolute bottom-4 text-sm opacity-70 z-10">
+          {config?.login_developer_text || "2025 | Desenvolvido por Vinícius Dev"}
         </div>
       </div>
-
-      {/* Right side with login form */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
-        <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
-          <h1 className="text-2xl font-bold mb-8 text-center">Vamos começar</h1>
+      
+      {/* Right side - Login Form */}
+      <div 
+        className="w-full md:w-1/2 flex items-center justify-center p-6"
+        style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}
+      >
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white mb-2">Bem-vindo de volta</h1>
+            <p className="text-gray-400">Faça login para continuar</p>
+          </div>
           
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm">E-mail</label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Digite seu melhor e-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm">Senha</label>
-              <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-white">Email</Label>
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Digite sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Digite seu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-gray-800 border-gray-700 text-white"
                   required
-                  className="bg-black border-gray-700 text-white placeholder:text-gray-500 pr-10"
                 />
-                <button 
-                  type="button"
-                  onClick={toggleShowPassword}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  )}
-                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="password" className="text-white">Senha</Label>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Digite sua senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-gray-800 border-gray-700 text-white pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  >
+                    {showPassword ? "🔒" : "👁️"}
+                  </button>
+                </div>
               </div>
               <div className="text-right">
                 <Link to="/reset-password" className="text-sm hover:underline" style={linkColorStyle}>
                   Esqueceu a senha?
                 </Link>
               </div>
+              
+              <div>
+                <Button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full font-medium"
+                  style={{
+                    backgroundColor: config?.login_button_color || '#CB5EEE',
+                    color: config?.login_button_text_color || '#FFFFFF'
+                  }}
+                >
+                  {loading ? "Carregando..." : "Entrar"}
+                </Button>
+              </div>
             </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full py-6 text-center rounded-lg font-medium"
-              style={{ 
-                backgroundColor: config?.login_button_color || '#CB5EEE', 
-                color: config?.login_button_text_color || '#FFFFFF'
-              }}
-              disabled={loading}
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
           </form>
           
           <p className="mt-6 text-center text-sm text-gray-400">
             Não possui uma conta? <Link to="/signup" className="hover:underline" style={linkColorStyle}>Criar conta</Link>
           </p>
+          
+          <div className="mt-6">
+            <div className="flex items-center justify-center space-x-2">
+              <label className="inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={useBackgroundImage}
+                  onChange={() => setUseBackgroundImage(!useBackgroundImage)}
+                />
+                <div className="relative w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <span className="ms-3 text-sm font-medium text-gray-300">Usar Imagem de Fundo</span>
+              </label>
+            </div>
+          </div>
         </div>
-        
-        <p className="mt-8 text-sm text-gray-500">
-          {config?.login_developer_text || '2025 | Desenvolvido por Vinícius Dev'}
-        </p>
       </div>
     </div>
   );
