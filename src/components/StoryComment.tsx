@@ -6,6 +6,7 @@ import { Textarea } from './ui/textarea';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from './ui/use-toast';
 import { Trash, MessageCircle } from 'lucide-react';
+import Tags from './Tags'; // Importando o componente Tags para destacar @mentions
 
 interface StoryCommentProps {
   comment: {
@@ -69,13 +70,16 @@ const StoryComment: React.FC<StoryCommentProps> = ({
   const handleReply = async () => {
     if (!replyText.trim()) return;
     
+    // Adicionar @ ao nome do usuário para o destaque
+    const replyWithMention = `@${comment.user.username} ${replyText}`;
+    
     try {
       const { error } = await supabase
         .from('story_comments')
         .insert({
           story_id: storyId,
           user_id: currentUserId,
-          text: replyText,
+          text: replyWithMention,
           parent_comment_id: comment.id
         });
       
@@ -149,7 +153,9 @@ const StoryComment: React.FC<StoryCommentProps> = ({
             </div>
           </div>
           
-          <p className="text-sm mt-1">{comment.text}</p>
+          <p className="text-sm mt-1">
+            <Tags content={comment.text} />
+          </p>
           
           {isReplying && (
             <div className="mt-3">
