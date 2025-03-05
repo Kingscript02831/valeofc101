@@ -37,6 +37,9 @@ const ResetPassword = () => {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
 
+  // Variable for the link color that matches the button color
+  const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Left side with image and quote */}
@@ -123,7 +126,7 @@ const ResetPassword = () => {
               </Button>
               
               <div className="text-center">
-                <Link to="/login" className="text-purple-400 hover:underline text-sm">
+                <Link to="/login" className="hover:underline text-sm" style={linkColorStyle}>
                   Voltar para o Login
                 </Link>
               </div>
