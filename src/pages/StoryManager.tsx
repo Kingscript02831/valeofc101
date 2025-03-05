@@ -124,6 +124,50 @@ const StoryManager = () => {
     }
   };
 
+  const getStoryPreview = (story: Story) => {
+    // For text stories, the content is stored as JSON in the media_url field
+    if (story.media_type === "text") {
+      try {
+        // Try to parse the JSON content
+        const textContent = JSON.parse(story.media_url);
+        return (
+          <div 
+            className="h-full w-full flex items-center justify-center"
+            style={{ 
+              backgroundColor: textContent.bgcolor || "#000000",
+              color: textContent.color || "#FFFFFF",
+              fontSize: textContent.fontSize || "16px",
+              padding: "8px"
+            }}
+          >
+            <p className="text-center truncate">{textContent.text}</p>
+          </div>
+        );
+      } catch (e) {
+        // Fallback if parsing fails
+        return (
+          <div className="h-full w-full flex items-center justify-center bg-gray-800">
+            <p className="text-center truncate text-sm">{story.media_url}</p>
+          </div>
+        );
+      }
+    }
+    
+    // For image and video stories
+    return story.media_type === 'video' ? (
+      <video 
+        src={story.media_url} 
+        className="h-full w-full object-cover"
+      />
+    ) : (
+      <img 
+        src={story.media_url} 
+        alt="Story preview" 
+        className="h-full w-full object-cover"
+      />
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background pt-14 pb-20">
       {/* Cabeçalho fixo */}
@@ -135,7 +179,7 @@ const StoryManager = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate("/story/new")}
+          onClick={() => navigate("/story/creator")}
           className="text-blue-500"
         >
           <Plus className="h-6 w-6" />
@@ -168,7 +212,7 @@ const StoryManager = () => {
                 </div>
                 <div className="ml-auto">
                   <Button 
-                    onClick={() => navigate("/story/new")}
+                    onClick={() => navigate("/story/creator")}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Adicionar Story
@@ -191,7 +235,7 @@ const StoryManager = () => {
               <div className="p-8 text-center">
                 <p className="text-gray-500">Você não possui stories ativos.</p>
                 <Button 
-                  onClick={() => navigate("/story/new")}
+                  onClick={() => navigate("/story/creator")}
                   className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Criar Primeiro Story
@@ -208,18 +252,7 @@ const StoryManager = () => {
                           className="h-16 w-16 rounded-md bg-gray-100 dark:bg-gray-800 overflow-hidden cursor-pointer"
                           onClick={() => navigate(`/story/view/${currentUser?.id}`)}
                         >
-                          {story.media_type === 'video' ? (
-                            <video 
-                              src={story.media_url} 
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <img 
-                              src={story.media_url} 
-                              alt="Story preview" 
-                              className="h-full w-full object-cover"
-                            />
-                          )}
+                          {getStoryPreview(story)}
                         </div>
                         
                         {/* Detalhes do story */}

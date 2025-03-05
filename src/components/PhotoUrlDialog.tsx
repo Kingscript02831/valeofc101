@@ -1,91 +1,100 @@
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea"; 
 
 interface PhotoUrlDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (url: string) => void;
   title: string;
+  placeholder?: string;
+  textInputOnly?: boolean;
 }
 
-const PhotoUrlDialog = ({ isOpen, onClose, onConfirm, title }: PhotoUrlDialogProps) => {
+const PhotoUrlDialog = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title,
+  placeholder = "Cole a URL da imagem aqui",
+  textInputOnly = false
+}: PhotoUrlDialogProps) => {
   const [url, setUrl] = useState("");
-  const [isValidating, setIsValidating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = () => {
-    // Remover qualquer dl=0 existente e outros parâmetros
-    let finalUrl = url;
-    setIsValidating(true);
-    
-    try {
-      // Se é um link do Dropbox
-      if (finalUrl.includes('dropbox.com')) {
-        // Substitua www.dropbox.com por dl.dropboxusercontent.com
-        if (finalUrl.includes('www.dropbox.com')) {
-          finalUrl = finalUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
-        }
-        
-        // Remover dl=0 se existir
-        finalUrl = finalUrl.replace(/[&?]dl=0/g, '');
-        
-        // Adicionar dl=1 no final
-        finalUrl = finalUrl.includes('?') ? `${finalUrl}&dl=1` : `${finalUrl}?dl=1`;
-      }
-      
-      // Testar se a URL é válida
-      new URL(finalUrl);
-      
-      onConfirm(finalUrl);
-      setUrl("");
-      onClose();
-    } catch (error) {
-      console.error("URL inválida:", error);
-      alert("URL inválida. Por favor, insira uma URL válida.");
-    } finally {
-      setIsValidating(false);
+    if (!url.trim()) {
+      setError("Por favor, insira um valor");
+      return;
     }
+    
+    // If textInputOnly is true, we don't need to validate URL format
+    if (!textInputOnly) {
+      // Simple URL validation
+      try {
+        new URL(url);
+      } catch (e) {
+        setError("Por favor, insira uma URL válida");
+        return;
+      }
+    }
+    
+    onConfirm(url);
+    onClose();
+    setUrl("");
+    setError(null);
+  };
+
+  const handleClose = () => {
+    onClose();
+    setUrl("");
+    setError(null);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#332D2D] border-gray-700 text-white sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {textInputOnly 
+              ? "Digite o texto para seu story" 
+              : "Cole a URL da mídia nos formatos suportados (jpg, png, mp4, webm, etc)"}
+          </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <Input
-            placeholder="Cole aqui o link do Dropbox"
+        
+        {textInputOnly ? (
+          <Textarea
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="bg-[#453B3B] border-gray-600 text-white placeholder:text-gray-400"
+            onChange={(e) => {
+              setUrl(e.target.value);
+              if (error) setError(null);
+            }}
+            placeholder={placeholder}
+            className="resize-none h-32"
           />
-          <p className="text-xs text-gray-400 mt-2">
-            Cole o link do Dropbox aqui. O sistema irá automaticamente converter para um link de download direto.
-          </p>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="bg-transparent border-gray-600 text-white hover:bg-gray-700"
-          >
+        ) : (
+          <Input
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              if (error) setError(null);
+            }}
+            placeholder={placeholder}
+          />
+        )}
+        
+        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+        
+        <DialogFooter className="sm:justify-end">
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button
-            onClick={handleConfirm}
-            className="bg-blue-600 text-white hover:bg-blue-700"
-            disabled={!url.trim() || isValidating}
-          >
-            {isValidating ? "Validando..." : "Confirmar"}
+          <Button type="button" onClick={handleConfirm}>
+            Confirmar
           </Button>
         </DialogFooter>
       </DialogContent>
