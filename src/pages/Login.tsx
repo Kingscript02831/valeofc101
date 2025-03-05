@@ -61,13 +61,13 @@ const Login = () => {
       {/* Login form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
         <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
-          {/* Fixed logo image */}
+          {/* Round logo image */}
           <div className="mb-10 -mt-4">
             <div className="flex justify-center">
               <img 
                 src="/logologin.png" 
                 alt="Logo" 
-                className="h-24 w-auto object-contain"
+                className="h-24 w-24 object-cover rounded-full border-2 border-white/20"
               />
             </div>
           </div>

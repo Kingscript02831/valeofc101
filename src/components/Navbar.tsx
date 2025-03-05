@@ -1,6 +1,6 @@
 
 import { Link, useNavigate } from "react-router-dom";
-import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { useSiteConfig } from "../hooks/useSiteConfig";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 

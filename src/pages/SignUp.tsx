@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -7,13 +6,7 @@ import { Input } from "../components/ui/input";
 import { toast } from "sonner";
 import { useSiteConfig } from "../hooks/useSiteConfig";
 import { translateAuthError } from "../utils/auth-errors";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "../components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 
 interface Location {
@@ -36,7 +29,6 @@ const SignUp = () => {
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useSiteConfig();
 
-  // Get locations from database
   const { data: locations, isLoading: locationsLoading } = useQuery({
     queryKey: ["locations"],
     queryFn: async () => {
@@ -108,12 +100,10 @@ const SignUp = () => {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
 
-  // Variable for the link color that matches the button color
   const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Left side with image and quote */}
       <div className="relative flex-1 hidden md:flex flex-col justify-between bg-gradient-to-r from-purple-800 to-purple-900 overflow-hidden">
         {config?.login_background_image ? (
           <div className="absolute inset-0 z-0">
@@ -144,15 +134,13 @@ const SignUp = () => {
         </div>
       </div>
 
-      {/* Right side with signup form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
         <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
-          {/* Fixed logo image */}
           <div className="mb-8 flex justify-center">
             <img 
               src="/logologin.png" 
               alt="Logo" 
-              className="h-24 w-auto object-contain"
+              className="h-24 w-24 object-cover rounded-full border-2 border-white/20"
             />
           </div>
           
@@ -305,14 +293,14 @@ const SignUp = () => {
             
             <Button 
               type="submit" 
-              className="w-full py-6 text-center rounded-lg font-medium mt-6"
+              className="w-full py-6 text-center rounded-lg font-medium"
               style={{ 
                 backgroundColor: config?.login_button_color || '#CB5EEE', 
                 color: config?.login_button_text_color || '#FFFFFF'
               }}
               disabled={loading}
             >
-              {loading ? "Criando conta..." : "Criar conta"}
+              {loading ? "Criando conta..." : "Criar Conta"}
             </Button>
           </form>
           
