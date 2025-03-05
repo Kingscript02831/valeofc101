@@ -75,7 +75,7 @@ const SignUp = () => {
         password,
         options: {
           data: {
-            name: fullName,
+            full_name: fullName, // This now matches the field name used in the handle_new_user function
             username,
             phone,
             birth_date: birthDate,
