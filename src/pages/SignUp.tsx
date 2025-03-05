@@ -6,15 +6,49 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toast } from "sonner";
 import { useSiteConfig } from "../hooks/useSiteConfig";
+import { translateAuthError } from "../utils/auth-errors";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "../components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+
+interface Location {
+  id: string;
+  name: string;
+}
 
 const SignUp = () => {
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [locationId, setLocationId] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useSiteConfig();
+
+  // Get locations from database
+  const { data: locations, isLoading: locationsLoading } = useQuery({
+    queryKey: ["locations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("locations")
+        .select("id, name")
+        .order("name");
+      
+      if (error) throw error;
+      return data as Location[];
+    }
+  });
 
   useEffect(() => {
     const getSession = async () => {
@@ -28,6 +62,12 @@ const SignUp = () => {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast.error("As senhas não coincidem!");
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
@@ -35,7 +75,11 @@ const SignUp = () => {
         password,
         options: {
           data: {
-            name,
+            name: fullName,
+            username,
+            phone,
+            birth_date: birthDate,
+            location_id: locationId
           },
         },
       });
@@ -45,27 +89,10 @@ const SignUp = () => {
       });
       navigate("/login");
     } catch (error: any) {
-      if (error.message.includes("already registered")) {
-        toast.error("Este e-mail já está cadastrado");
-      } else {
-        toast.error(`Erro ao criar conta: ${error.message}`);
-      }
+      const errorMessage = translateAuthError(error.message);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSignUpWithProvider = async (provider: 'facebook' | 'google') => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(`Erro ao criar conta com ${provider}: ${error.message}`);
     }
   };
 
@@ -73,7 +100,11 @@ const SignUp = () => {
     setShowPassword(!showPassword);
   };
 
-  if (configLoading) {
+  const toggleShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  if (configLoading || locationsLoading) {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
 
@@ -113,17 +144,30 @@ const SignUp = () => {
       {/* Right side with signup form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
         <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
-          <h1 className="text-2xl font-bold mb-8 text-center">Vamos começar</h1>
+          <h1 className="text-2xl font-bold mb-8 text-center">Criar conta</h1>
           
-          <form onSubmit={handleSignUp} className="space-y-6">
+          <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm">Nome</label>
+              <label htmlFor="fullName" className="block text-sm">Nome Completo</label>
               <Input
-                id="name"
+                id="fullName"
                 type="text"
-                placeholder="Digite seu nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Digite seu nome completo"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="username" className="block text-sm">Nome de Usuário</label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Digite seu nome de usuário"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               />
@@ -139,6 +183,47 @@ const SignUp = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="phone" className="block text-sm">Telefone</label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Digite seu telefone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="location" className="block text-sm">Localização</label>
+              <Select value={locationId} onValueChange={setLocationId}>
+                <SelectTrigger className="bg-black border-gray-700 text-white">
+                  <SelectValue placeholder="Selecione sua cidade" />
+                </SelectTrigger>
+                <SelectContent className="bg-black border-gray-700 text-white">
+                  {locations?.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="birthDate" className="block text-sm">Data de Nascimento</label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                required
+                className="bg-black border-gray-700 text-white"
               />
             </div>
             
@@ -173,10 +258,42 @@ const SignUp = () => {
                 </button>
               </div>
             </div>
+
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="block text-sm">Confirmar Senha</label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirme sua senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="bg-black border-gray-700 text-white placeholder:text-gray-500 pr-10"
+                />
+                <button 
+                  type="button"
+                  onClick={toggleShowConfirmPassword}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                >
+                  {showConfirmPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
             
             <Button 
               type="submit" 
-              className="w-full py-6 text-center rounded-lg font-medium"
+              className="w-full py-6 text-center rounded-lg font-medium mt-6"
               style={{ 
                 backgroundColor: config?.login_button_color || '#CB5EEE', 
                 color: config?.login_button_text_color || '#FFFFFF'
@@ -186,28 +303,6 @@ const SignUp = () => {
               {loading ? "Criando conta..." : "Criar conta"}
             </Button>
           </form>
-          
-          <div className="mt-6 space-y-4">
-            <Button 
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 py-6 border-gray-700 text-white hover:bg-gray-800"
-              onClick={() => handleSignUpWithProvider('facebook')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#4267B2"><path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z"></path></svg>
-              Entrar com o Facebook
-            </Button>
-            
-            <Button 
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 py-6 border-gray-700 text-white hover:bg-gray-800"
-              onClick={() => handleSignUpWithProvider('google')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#DB4437"><path d="M6 12C6 15.3137 8.68629 18 12 18C14.6124 18 16.8349 16.3304 17.6586 14H12V10H21.8047V14H21.8C20.8734 18.5645 16.8379 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C15.445 2 18.4831 3.742 20.2815 6.39318L17.0039 8.68815C15.9296 7.06812 14.0895 6 12 6C8.68629 6 6 8.68629 6 12Z"></path></svg>
-              Entrar com o Google
-            </Button>
-          </div>
           
           <p className="mt-6 text-center text-sm text-gray-400">
             Já possui uma conta? <Link to="/login" className="text-purple-400 hover:underline">Faça login</Link>

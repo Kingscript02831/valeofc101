@@ -17,4 +17,6 @@ export interface Profile {
   birth_date?: string | null;
   has_active_stories?: boolean;
   has_viewed_stories?: boolean;
+  phone?: string | null;
+  location_id?: string | null;
 }

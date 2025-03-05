@@ -18,7 +18,7 @@ BEGIN
   VALUES (
     new.id,
     new.raw_user_meta_data->>'username',
-    new.raw_user_meta_data->>'full_name',
+    new.raw_user_meta_data->>'name',
     new.email,
     new.raw_user_meta_data->>'phone',
     (new.raw_user_meta_data->>'birth_date')::date,

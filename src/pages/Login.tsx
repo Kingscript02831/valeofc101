@@ -45,20 +45,6 @@ const Login = () => {
     }
   };
 
-  const handleLoginWithProvider = async (provider: 'facebook' | 'google') => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(`Erro ao fazer login com ${provider}: ${error.message}`);
-    }
-  };
-
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -168,28 +154,6 @@ const Login = () => {
               {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
-          
-          <div className="mt-6 space-y-4">
-            <Button 
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 py-6 border-gray-700 text-white hover:bg-gray-800"
-              onClick={() => handleLoginWithProvider('facebook')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#4267B2"><path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z"></path></svg>
-              Entrar com o Facebook
-            </Button>
-            
-            <Button 
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 py-6 border-gray-700 text-white hover:bg-gray-800"
-              onClick={() => handleLoginWithProvider('google')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#DB4437"><path d="M6 12C6 15.3137 8.68629 18 12 18C14.6124 18 16.8349 16.3304 17.6586 14H12V10H21.8047V14H21.8C20.8734 18.5645 16.8379 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C15.445 2 18.4831 3.742 20.2815 6.39318L17.0039 8.68815C15.9296 7.06812 14.0895 6 12 6C8.68629 6 6 8.68629 6 12Z"></path></svg>
-              Entrar com o Google
-            </Button>
-          </div>
           
           <p className="mt-6 text-center text-sm text-gray-400">
             Não possui uma conta? <Link to="/signup" className="text-purple-400 hover:underline">Criar conta</Link>
