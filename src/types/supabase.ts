@@ -187,6 +187,7 @@ export interface Database {
           media_type: string;
           created_at: string;
           expires_at: string;
+          link_url?: string | null;
         };
         Insert: {
           id?: string;
@@ -195,6 +196,7 @@ export interface Database {
           media_type: string;
           created_at?: string;
           expires_at?: string;
+          link_url?: string | null;
         };
         Update: {
           id?: string;
@@ -203,6 +205,7 @@ export interface Database {
           media_type?: string;
           created_at?: string;
           expires_at?: string;
+          link_url?: string | null;
         };
         Relationships: [
           {

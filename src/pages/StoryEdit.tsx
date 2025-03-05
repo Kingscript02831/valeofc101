@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
@@ -8,7 +8,7 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Link, User, Save } from "lucide-react";
+import { ArrowLeft, Link, Save } from "lucide-react";
 import { MediaCarousel } from "../components/MediaCarousel";
 
 interface StoryData {
@@ -19,7 +19,6 @@ interface StoryData {
   created_at: string;
   expires_at: string;
   link_url?: string;
-  tagged_person?: string;
 }
 
 const StoryEdit = () => {
@@ -28,7 +27,6 @@ const StoryEdit = () => {
   const queryClient = useQueryClient();
   
   const [linkUrl, setLinkUrl] = useState<string>("");
-  const [taggedPerson, setTaggedPerson] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch story data
@@ -46,16 +44,13 @@ const StoryEdit = () => {
       if (error) throw error;
       return data as StoryData;
     },
-    onSuccess: (data) => {
-      // Initialize form with existing data
-      if (data.link_url) setLinkUrl(data.link_url);
-      if (data.tagged_person) setTaggedPerson(data.tagged_person);
-    },
-    onError: (error) => {
-      console.error("Error fetching story:", error);
-      toast.error("Erro ao carregar dados da história");
-      navigate("/story/creator");
-    },
+  });
+
+  // Initialize form with existing data when story data is loaded
+  useState(() => {
+    if (story && story.link_url) {
+      setLinkUrl(story.link_url);
+    }
   });
 
   // Update story mutation
@@ -65,8 +60,7 @@ const StoryEdit = () => {
 
       // Fields to update
       const updates = {
-        link_url: linkUrl || null,
-        tagged_person: taggedPerson || null,
+        link_url: linkUrl || null
       };
 
       const { data, error } = await supabase
@@ -168,24 +162,6 @@ const StoryEdit = () => {
                 />
                 <p className="text-xs text-gray-400">
                   Adicione um link para direcionar os visualizadores
-                </p>
-              </div>
-
-              {/* Campo para marcar pessoa */}
-              <div className="space-y-2">
-                <Label htmlFor="tag" className="text-white flex items-center gap-2">
-                  <User size={16} />
-                  Marcar Pessoa
-                </Label>
-                <Input
-                  id="tag"
-                  value={taggedPerson}
-                  onChange={(e) => setTaggedPerson(e.target.value)}
-                  placeholder="@username"
-                  className="bg-gray-900 border-gray-700 text-white"
-                />
-                <p className="text-xs text-gray-400">
-                  Marque um usuário nesta história
                 </p>
               </div>
 
