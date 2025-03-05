@@ -1,3 +1,4 @@
+
 @layer base {
   :root {
     --background: 0 0% 98%;
@@ -258,24 +259,5 @@
 
   .location-icon {
     @apply h-3 w-3;
-  }
-
-  /* Story viewer styles */
-  .story-comment-bar {
-    @apply bg-black text-white border-t border-gray-800;
-  }
-  
-  .story-comment-bar input,
-  .story-comment-bar textarea {
-    @apply bg-black text-white border-gray-700 placeholder-gray-400;
-  }
-  
-  .story-comment-bar button,
-  .story-comment-bar svg {
-    @apply text-white;
-  }
-  
-  .story-exit-button {
-    @apply absolute top-4 right-4 bg-black/60 text-white p-1.5 rounded-full z-50;
   }
 }
