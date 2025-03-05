@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../integrations/supabase/client";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { useSiteConfig } from "../hooks/useSiteConfig";
-import { translateAuthError } from "../utils/auth-errors";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { translateAuthError } from "@/utils/auth-errors";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -30,11 +30,38 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      // Check if input is email or username
+      const isEmail = usernameOrEmail.includes('@');
+      
+      if (isEmail) {
+        // Login with email directly
+        const { error } = await supabase.auth.signInWithPassword({
+          email: usernameOrEmail,
+          password,
+        });
+        
+        if (error) throw error;
+      } else {
+        // Login with username - first fetch the email associated with username
+        const { data, error: fetchError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('username', usernameOrEmail)
+          .single();
+        
+        if (fetchError || !data?.email) {
+          throw new Error('Usuário não encontrado');
+        }
+        
+        // Then login with the retrieved email
+        const { error } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password,
+        });
+        
+        if (error) throw error;
+      }
+      
       toast.success("Login realizado com sucesso!");
       navigate("/");
     } catch (error: any) {
@@ -76,13 +103,13 @@ const Login = () => {
           
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm">E-mail</label>
+              <label htmlFor="usernameOrEmail" className="block text-sm">Email ou @username</label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Digite seu melhor e-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="usernameOrEmail"
+                type="text"
+                placeholder="Digite seu email ou @username"
+                value={usernameOrEmail}
+                onChange={(e) => setUsernameOrEmail(e.target.value.replace(/^@/, ''))}
                 required
                 className="bg-black border-b-[1px] border-t-0 border-l-0 border-r-0 border-gray-700 text-white placeholder:text-gray-500 rounded-none focus:ring-0"
               />
