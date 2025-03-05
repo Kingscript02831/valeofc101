@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
@@ -68,20 +67,10 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
 
   const handleClick = () => {
     if (isCurrentUser) {
-      // If the user has stories, view them, otherwise go to story management
-      if (storiesData?.hasStories) {
-        navigate(`/story/view/${userId}`);
-      } else {
-        navigate(`/story/manage`);
-      }
+      navigate(`/story/manage`);
     } else if (storiesData?.hasStories) {
       navigate(`/story/view/${userId}`);
     }
-  };
-
-  const handleAddClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the parent click event
-    navigate("/story/creator");
   };
 
   const displayName = isCurrentUser ? "Seu story" : 
@@ -114,10 +103,7 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
         </Avatar>
 
         {isCurrentUser && (
-          <div 
-            className="absolute bottom-0 right-0 bg-blue-500 rounded-full border-2 border-white dark:border-black w-4 h-4 flex items-center justify-center"
-            onClick={handleAddClick}
-          >
+          <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full border-2 border-white dark:border-black w-4 h-4 flex items-center justify-center">
             <Plus className="h-2 w-2 text-white" />
           </div>
         )}
