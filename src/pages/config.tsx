@@ -622,27 +622,6 @@ const Admin = () => {
               
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="login_background_image">Imagem de Fundo</Label>
-                  <Input
-                    id="login_background_image"
-                    type="url"
-                    value={config.login_background_image || ""}
-                    onChange={(e) => setConfig({ ...config, login_background_image: e.target.value })}
-                    placeholder="URL da imagem de fundo"
-                    className="mb-2"
-                  />
-                  <p className="text-sm text-gray-500">
-                    {config.login_background_image && (
-                      <img 
-                        src={config.login_background_image} 
-                        alt="Login background preview" 
-                        className="mt-2 h-28 object-cover rounded-lg" 
-                      />
-                    )}
-                  </p>
-                </div>
-                
-                <div>
                   <Label htmlFor="login_card_background_color">Cor de Fundo do Card</Label>
                   <div className="flex gap-2">
                     <Input
