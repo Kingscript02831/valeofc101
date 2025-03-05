@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -5,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toast } from "sonner";
 import { useSiteConfig } from "../hooks/useSiteConfig";
-import { translateAuthError } from "../utils/auth-errors";
+import { translateAuthError, validateUsername } from "../utils/auth-errors";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 
@@ -17,6 +18,7 @@ interface Location {
 const SignUp = () => {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [locationId, setLocationId] = useState("");
@@ -52,8 +54,31 @@ const SignUp = () => {
     getSession();
   }, [navigate]);
 
+  // Adicionar validação de username quando o valor mudar
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value.toLowerCase(); // Converter para minúsculas para consistência
+    setUsername(newUsername);
+    
+    if (newUsername) {
+      const validation = validateUsername(newUsername);
+      setUsernameError(validation.message);
+    } else {
+      setUsernameError("");
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validar username antes de prosseguir
+    if (username) {
+      const validation = validateUsername(username);
+      if (!validation.isValid) {
+        toast.error(validation.message);
+        setUsernameError(validation.message);
+        return;
+      }
+    }
     
     if (password !== confirmPassword) {
       toast.error("As senhas não coincidem!");
@@ -68,7 +93,7 @@ const SignUp = () => {
         options: {
           data: {
             full_name: fullName,
-            username,
+            username: username.toLowerCase(), // Armazenar sempre em minúsculas
             phone,
             birth_date: birthDate,
             location_id: locationId
@@ -167,10 +192,16 @@ const SignUp = () => {
                 type="text"
                 placeholder="Digite seu nome de usuário"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={handleUsernameChange}
                 required
-                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
+                className={`bg-black border-gray-700 text-white placeholder:text-gray-500 ${usernameError ? 'border-red-500' : ''}`}
               />
+              {usernameError && (
+                <p className="text-red-500 text-xs mt-1">{usernameError}</p>
+              )}
+              <p className="text-gray-400 text-xs mt-1">
+                Apenas letras, números, pontos (.) e underscores (_). Entre 1-30 caracteres.
+              </p>
             </div>
             
             <div className="space-y-2">
@@ -298,7 +329,7 @@ const SignUp = () => {
                 backgroundColor: config?.login_button_color || '#CB5EEE', 
                 color: config?.login_button_text_color || '#FFFFFF'
               }}
-              disabled={loading}
+              disabled={loading || !!usernameError}
             >
               {loading ? "Criando conta..." : "Criar Conta"}
             </Button>

@@ -26,3 +26,41 @@ export const translateAuthError = (error: string): string => {
   
   return `Erro: ${error}`;
 };
+
+export const validateUsername = (username: string): { isValid: boolean; message: string } => {
+  // 1. Verificar caracteres permitidos (letras, números, pontos, underscores)
+  const allowedPattern = /^[a-zA-Z0-9._]+$/;
+  if (!allowedPattern.test(username)) {
+    return {
+      isValid: false,
+      message: "Apenas letras, números, pontos (.) e underscores (_) são permitidos."
+    };
+  }
+
+  // 2. Verificar comprimento (entre 1 e 30 caracteres)
+  if (username.length < 1 || username.length > 30) {
+    return {
+      isValid: false,
+      message: "O nome de usuário deve ter entre 1 e 30 caracteres."
+    };
+  }
+
+  // 3. Verificar pontos e underscores no início ou final
+  if (username.startsWith('.') || username.startsWith('_') || 
+      username.endsWith('.') || username.endsWith('_')) {
+    return {
+      isValid: false,
+      message: "Pontos e underscores não podem estar no início ou no final do nome de usuário."
+    };
+  }
+
+  // 4. Verificar pontos e underscores repetidos em sequência
+  if (username.includes('..') || username.includes('__')) {
+    return {
+      isValid: false,
+      message: "Pontos e underscores não podem estar repetidos em sequência."
+    };
+  }
+
+  return { isValid: true, message: "" };
+};
