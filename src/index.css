@@ -194,6 +194,29 @@
   display: none; /* Chrome, Safari, Opera */
 }
 
+/* Story viewer specific styles */
+.story-comment-bar {
+  background-color: #000000 !important; /* Solid black background */
+  border-top: 1px solid #333;
+}
+
+.story-comment-bar input,
+.story-comment-bar textarea,
+.story-comment-bar button {
+  color: white !important;
+}
+
+.story-exit-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 9999px;
+  padding: 6px;
+  z-index: 50;
+}
+
 /* Animação sutil para destacar stories não vistos */
 @keyframes pulse-border {
   0% {
