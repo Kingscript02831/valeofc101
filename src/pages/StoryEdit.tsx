@@ -8,10 +8,11 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Image, Video } from "lucide-react";
+import { ArrowLeft, Save, Image, Video, MessageSquare } from "lucide-react";
 import { MediaCarousel } from "../components/MediaCarousel";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { transformDropboxUrl } from "../utils/mediaUtils";
+import { Switch } from "../components/ui/switch";
 
 interface StoryData {
   id: string;
@@ -20,6 +21,7 @@ interface StoryData {
   media_type: "image" | "video" | "text";
   created_at: string;
   expires_at: string;
+  comments_enabled: boolean;
 }
 
 const StoryEdit = () => {
@@ -31,6 +33,7 @@ const StoryEdit = () => {
   const [mediaType, setMediaType] = useState<"image" | "video" | "text">("image");
   const [isLoading, setIsLoading] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
 
   // Fetch story data
   const { data: story, isLoading: isStoryLoading } = useQuery({
@@ -58,6 +61,8 @@ const StoryEdit = () => {
       if (story.media_type) {
         setMediaType(story.media_type);
       }
+      // Inicializa o status de comentários habilitados
+      setCommentsEnabled(story.comments_enabled !== false);
     }
   }, [story]);
 
@@ -73,7 +78,8 @@ const StoryEdit = () => {
       const { data, error } = await supabase
         .from("stories")
         .update({
-          media_url: finalMediaUrl
+          media_url: finalMediaUrl,
+          comments_enabled: commentsEnabled
         })
         .eq("id", id)
         .select();
@@ -93,6 +99,12 @@ const StoryEdit = () => {
     },
   });
 
+  const handleMediaUpdate = (newUrl: string) => {
+    // Transform Dropbox URL if needed
+    const transformedUrl = transformDropboxUrl(newUrl);
+    setMediaUrl(transformedUrl);
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
@@ -102,12 +114,6 @@ const StoryEdit = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleMediaUpdate = (newUrl: string) => {
-    // Transform Dropbox URL if needed
-    const transformedUrl = transformDropboxUrl(newUrl);
-    setMediaUrl(transformedUrl);
   };
 
   if (isStoryLoading) {
@@ -184,6 +190,24 @@ const StoryEdit = () => {
                   Altere a URL da {mediaType === "image" ? "imagem" : "vídeo"} do seu story
                 </p>
               </div>
+
+              {/* Opção para ativar/desativar comentários */}
+              <div className="flex items-center justify-between space-y-0 pt-2">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <Label htmlFor="comments-toggle" className="text-sm font-medium text-white">
+                    Permitir comentários
+                  </Label>
+                </div>
+                <Switch
+                  id="comments-toggle"
+                  checked={commentsEnabled}
+                  onCheckedChange={setCommentsEnabled}
+                />
+              </div>
+              <p className="text-xs text-gray-400 pt-1">
+                {commentsEnabled ? "Os usuários poderão comentar no seu story" : "Os comentários estão desativados para este story"}
+              </p>
 
               {/* Botões de ação */}
               <div className="pt-4">
