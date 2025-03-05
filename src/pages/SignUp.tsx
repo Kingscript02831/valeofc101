@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -9,6 +8,7 @@ import { useSiteConfig } from "../hooks/useSiteConfig";
 import { translateAuthError, validateUsername } from "../utils/auth-errors";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { debounce } from "lodash";
 
 interface Location {
   id: string;
@@ -38,6 +38,7 @@ const SignUp = () => {
     password: false,
     confirmPassword: false
   });
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useSiteConfig();
 
@@ -64,15 +65,53 @@ const SignUp = () => {
     getSession();
   }, [navigate]);
 
-  // Adicionar validação de username quando o valor mudar
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUsername = e.target.value.toLowerCase(); // Converter para minúsculas para consistência
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username) return;
+    
+    try {
+      setCheckingUsername(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username.toLowerCase())
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error checking username:", error);
+        return false;
+      }
+      
+      return !data;
+    } catch (error) {
+      console.error("Error checking username:", error);
+      return false;
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+  
+  const debouncedUsernameCheck = debounce(async (username: string) => {
+    if (username && !usernameError) {
+      const isAvailable = await checkUsernameAvailability(username);
+      if (!isAvailable) {
+        setUsernameError("Este nome de usuário já está em uso.");
+        setFormErrors(prev => ({...prev, username: true}));
+      }
+    }
+  }, 500);
+
+  const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value.toLowerCase();
     setUsername(newUsername);
     
     if (newUsername) {
       const validation = validateUsername(newUsername);
       setUsernameError(validation.message);
       setFormErrors(prev => ({...prev, username: !validation.isValid}));
+      
+      if (validation.isValid) {
+        debouncedUsernameCheck(newUsername);
+      }
     } else {
       setUsernameError("");
       setFormErrors(prev => ({...prev, username: true}));
@@ -93,7 +132,6 @@ const SignUp = () => {
     
     setFormErrors(errors);
     
-    // Retorna true se não houver erros
     return !Object.values(errors).some(Boolean);
   };
 
@@ -105,12 +143,19 @@ const SignUp = () => {
       return;
     }
     
-    // Validar username antes de prosseguir
     if (username) {
       const validation = validateUsername(username);
       if (!validation.isValid) {
         toast.error(validation.message, { duration: 3000 });
         setUsernameError(validation.message);
+        return;
+      }
+      
+      const isAvailable = await checkUsernameAvailability(username);
+      if (!isAvailable) {
+        toast.error("Este nome de usuário já está em uso.", { duration: 3000 });
+        setUsernameError("Este nome de usuário já está em uso.");
+        setFormErrors(prev => ({...prev, username: true}));
         return;
       }
     }
@@ -128,7 +173,7 @@ const SignUp = () => {
         options: {
           data: {
             full_name: fullName,
-            username: username.toLowerCase(), // Armazenar sempre em minúsculas
+            username: username.toLowerCase(),
             phone,
             birth_date: birthDate,
             location_id: locationId
@@ -245,6 +290,9 @@ const SignUp = () => {
               )}
               {formErrors.username && !usernameError && (
                 <p className="text-red-500 text-xs mt-1">Nome de usuário é obrigatório</p>
+              )}
+              {checkingUsername && (
+                <p className="text-gray-400 text-xs mt-1">Verificando disponibilidade...</p>
               )}
               <p className="text-gray-400 text-xs mt-1">
                 Apenas letras, números, pontos (.) e underscores (_). Entre 1-30 caracteres.
@@ -417,7 +465,7 @@ const SignUp = () => {
                 backgroundColor: config?.login_button_color || '#CB5EEE', 
                 color: config?.login_button_text_color || '#FFFFFF'
               }}
-              disabled={loading || !!usernameError}
+              disabled={loading || !!usernameError || checkingUsername}
             >
               {loading ? "Criando conta..." : "Criar Conta"}
             </Button>
