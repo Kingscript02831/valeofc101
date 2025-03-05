@@ -276,4 +276,82 @@
   .story-exit-button {
     @apply absolute top-4 right-4 bg-black text-white rounded-full p-1 z-50;
   }
+
+  /* Specific styles for story interface */
+  .story-option {
+    @apply relative overflow-hidden rounded-xl transition-all duration-300 aspect-square shadow-lg hover:shadow-xl;
+  }
+
+  .story-option-image {
+    @apply bg-gradient-to-br from-teal-400 to-blue-500;
+  }
+  
+  .story-option-video {
+    @apply bg-gradient-to-br from-blue-500 to-indigo-600;
+  }
+
+  .story-icon-container {
+    @apply bg-white dark:bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-md transition-transform duration-200 hover:scale-110;
+  }
+
+  .story-dialog {
+    @apply bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-auto max-w-md w-full p-4 border border-gray-200 dark:border-gray-700;
+  }
+
+  .story-input {
+    @apply w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white;
+  }
+
+  .story-btn-primary {
+    @apply w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors;
+  }
+
+  .story-btn-secondary {
+    @apply w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium py-3 rounded-lg transition-colors;
+  }
+
+  .story-gallery-item {
+    @apply relative aspect-square overflow-hidden;
+  }
+
+  .story-gallery-controls {
+    @apply absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2;
+  }
+
+  .story-gallery-btn {
+    @apply h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors;
+  }
+
+  /* Confirm dialog styles */
+  .confirm-dialog {
+    @apply fixed inset-0 flex items-center justify-center bg-black/60 z-50;
+  }
+
+  .confirm-dialog-content {
+    @apply bg-white dark:bg-gray-800 rounded-xl p-5 max-w-xs w-full mx-4 shadow-2xl border border-gray-200 dark:border-gray-700;
+  }
+
+  .confirm-dialog-title {
+    @apply text-xl font-semibold mb-1 text-gray-900 dark:text-white;
+  }
+
+  .confirm-dialog-message {
+    @apply text-gray-600 dark:text-gray-300 mb-6;
+  }
+
+  .confirm-dialog-buttons {
+    @apply flex gap-3 justify-end;
+  }
+
+  .confirm-btn-cancel {
+    @apply px-5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg font-medium;
+  }
+
+  .confirm-btn-confirm {
+    @apply px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium;
+  }
+  
+  .confirm-btn-delete {
+    @apply px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium;
+  }
 }

@@ -59,6 +59,17 @@ export default {
           light: "#555555",
           dark: "#ffffff",
         },
+        // New color extensions
+        story: {
+          image: {
+            from: "#4FD1C5",
+            to: "#3182CE",
+          },
+          video: {
+            from: "#4F46E5",
+            to: "#3B82F6",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -74,10 +85,22 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "pulse-shadow": {
+          "0%": { 
+            boxShadow: "0 0 0 0 rgba(59, 130, 246, 0.7)" 
+          },
+          "70%": { 
+            boxShadow: "0 0 0 6px rgba(59, 130, 246, 0)" 
+          },
+          "100%": { 
+            boxShadow: "0 0 0 0 rgba(59, 130, 246, 0)" 
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-shadow": "pulse-shadow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
       spacing: {
         // Add more compact spacing options
@@ -89,6 +112,9 @@ export default {
         "sm": "0.875rem",
         "base": "1rem",
         "lg": "1.125rem",
+      },
+      backdropBlur: {
+        xs: '2px',
       },
     },
   },

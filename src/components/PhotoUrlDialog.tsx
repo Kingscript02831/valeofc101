@@ -1,9 +1,10 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea"; 
+import { X } from "lucide-react";
 
 interface PhotoUrlDialogProps {
   isOpen: boolean;
@@ -56,42 +57,44 @@ const PhotoUrlDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {textInputOnly ? "Digite o texto para seu story" : ""}
-          </DialogDescription>
+          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">{title}</DialogTitle>
         </DialogHeader>
         
-        {textInputOnly ? (
-          <Textarea
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              if (error) setError(null);
-            }}
-            placeholder={placeholder}
-            className="resize-none h-32"
-          />
-        ) : (
-          <Input
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              if (error) setError(null);
-            }}
-            placeholder={placeholder}
-          />
-        )}
+        <div className="mt-2">
+          {textInputOnly ? (
+            <Textarea
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                if (error) setError(null);
+              }}
+              placeholder={placeholder}
+              className="resize-none h-32 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+            />
+          ) : (
+            <Input
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                if (error) setError(null);
+              }}
+              placeholder={placeholder}
+              className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+            />
+          )}
+          
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+        </div>
         
-        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-        
-        <DialogFooter className="sm:justify-end">
-          <Button type="button" variant="secondary" onClick={handleClose}>
+        <DialogFooter className="mt-4 sm:justify-between">
+          <Button type="button" variant="outline" onClick={handleClose} 
+            className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
             Cancelar
           </Button>
-          <Button type="button" onClick={handleConfirm}>
+          <Button type="button" onClick={handleConfirm}
+            className="bg-blue-600 hover:bg-blue-700 text-white">
             Confirmar
           </Button>
         </DialogFooter>

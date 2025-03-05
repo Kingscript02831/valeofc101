@@ -112,7 +112,7 @@ const StoryEdit = () => {
 
   if (isStoryLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
       </div>
     );
@@ -120,12 +120,12 @@ const StoryEdit = () => {
 
   if (!story) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-xl">História não encontrada</p>
           <Button 
             onClick={() => navigate("/story/creator")} 
-            className="mt-4 bg-blue-600 hover:bg-blue-700"
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
           >
             Voltar
           </Button>
@@ -135,10 +135,11 @@ const StoryEdit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pt-14 pb-20">
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-black">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/story/creator")}>
-          <ArrowLeft className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white pt-14 pb-20">
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/story/creator")}
+          className="text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+          <ArrowLeft className="h-6 w-6" />
         </Button>
         <h1 className="text-lg font-semibold">
           Editar {mediaType === "image" ? "Imagem" : "Vídeo"}
@@ -147,10 +148,10 @@ const StoryEdit = () => {
       </div>
 
       <div className="container max-w-md mx-auto p-4">
-        <Card className="overflow-hidden bg-black border-gray-800">
+        <Card className="overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg">
           <CardContent className="p-4">
             {/* Preview do Story */}
-            <div className="mb-6">
+            <div className="mb-6 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
               <MediaCarousel
                 images={mediaType === "image" ? [mediaUrl] : []}
                 videoUrls={mediaType === "video" ? [mediaUrl] : []}
@@ -164,7 +165,7 @@ const StoryEdit = () => {
             <div className="space-y-4">
               {/* Campo para alterar URL da mídia */}
               <div className="space-y-2">
-                <Label htmlFor="media" className="text-white flex items-center gap-2">
+                <Label htmlFor="media" className="text-gray-900 dark:text-white flex items-center gap-2">
                   {mediaType === "image" ? <Image size={16} /> : <Video size={16} />}
                   URL da {mediaType === "image" ? "Imagem" : "Vídeo"}
                 </Label>
@@ -174,13 +175,14 @@ const StoryEdit = () => {
                     value={mediaUrl}
                     onChange={(e) => setMediaUrl(e.target.value)}
                     placeholder={`URL da ${mediaType === "image" ? "imagem" : "vídeo"}`}
-                    className="bg-gray-900 border-gray-700 text-white flex-1"
+                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white flex-1"
                   />
-                  <Button onClick={() => setIsMediaDialogOpen(true)} variant="outline" className="border-gray-700">
+                  <Button onClick={() => setIsMediaDialogOpen(true)} variant="outline" 
+                    className="border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Editar
                   </Button>
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Altere a URL da {mediaType === "image" ? "imagem" : "vídeo"} do seu story
                 </p>
               </div>
@@ -189,7 +191,7 @@ const StoryEdit = () => {
               <div className="pt-4">
                 <Button
                   onClick={handleSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 py-5"
                   disabled={isLoading}
                 >
                   <Save size={18} />

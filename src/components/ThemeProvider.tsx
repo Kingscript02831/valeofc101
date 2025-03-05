@@ -71,14 +71,8 @@ export function ThemeProvider({
       root.classList.add("compact-ui")
     }
 
-    // Atualizar as cores do fundo e texto com base no tema
-    if (theme === "light") {
-      document.body.style.backgroundColor = "white"
-      document.body.style.color = "black"
-    } else {
-      document.body.style.backgroundColor = "black"
-      document.body.style.color = "white"
-    }
+    // Apply smooth transition effect when changing themes
+    document.body.style.transition = "background-color 0.3s ease, color 0.3s ease"
   }, [theme])
 
   const value = {
