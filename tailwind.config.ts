@@ -96,9 +96,6 @@ export default {
         "base": "1rem",
         "lg": "1.125rem",
       },
-      backgroundImage: {
-        'auth-pattern': "url('/path/to/pattern.png')",
-      },
     },
   },
   plugins: [require("tailwindcss-animate")],

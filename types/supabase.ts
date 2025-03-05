@@ -90,6 +90,16 @@ export type Database = {
           pwa_background_color: string | null
           pwa_install_message: string | null
           pwa_app_icon: string | null
+          login_background_image: string | null
+          login_card_background_color: string
+          login_button_color: string
+          login_button_text_color: string
+          login_label_color: string
+          login_label_muted_color: string
+          login_developer_text: string
+          login_quote_text: string
+          login_quote_author: string
+          login_quote_author_title: string
         }
       }
       events: {

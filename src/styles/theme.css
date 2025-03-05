@@ -53,6 +53,42 @@
     @apply bg-background text-foreground antialiased;
   }
 
+  .auth-mobile-background {
+    @apply fixed inset-0 z-0 md:hidden;
+  }
+
+  .auth-mobile-background img {
+    @apply w-full h-full object-cover;
+  }
+
+  .auth-mobile-background-overlay {
+    @apply absolute inset-0 bg-black/60;
+  }
+
+  .auth-card {
+    @apply relative z-10 w-full max-w-md bg-black rounded-2xl p-8;
+  }
+
+  .auth-label {
+    @apply block text-sm font-medium;
+  }
+
+  .auth-input {
+    @apply bg-black border-gray-700 text-white placeholder:text-gray-500;
+  }
+
+  .auth-link {
+    @apply text-sm hover:underline;
+  }
+
+  .auth-button {
+    @apply w-full py-6 text-center rounded-lg font-medium;
+  }
+
+  .auth-footnote {
+    @apply mt-8 text-sm text-gray-500 relative z-10;
+  }
+
   .glass {
     @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl dark:bg-black/30;
   }
@@ -275,43 +311,5 @@
 
   .story-exit-button {
     @apply absolute top-4 right-4 bg-black text-white rounded-full p-1 z-50;
-  }
-
-  /* Auth page background styles */
-  .auth-background {
-    @apply min-h-screen bg-black bg-no-repeat bg-cover bg-center;
-    background-position: center center;
-    background-size: cover;
-  }
-
-  /* Ensure image covers full screen on mobile */
-  @media (max-width: 768px) {
-    .auth-background {
-      background-attachment: fixed;
-    }
-  }
-
-  .auth-card {
-    @apply rounded-lg px-6 py-8 max-w-md w-full mx-auto;
-  }
-
-  .auth-label {
-    @apply block mb-2 font-medium;
-  }
-
-  .auth-input {
-    @apply w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-opacity-50;
-  }
-
-  .auth-button {
-    @apply w-full py-3 rounded-md font-medium transition-colors;
-  }
-
-  .auth-link {
-    @apply font-medium transition-colors hover:opacity-90;
-  }
-
-  .auth-text-muted {
-    transition: color 0.2s ease;
   }
 }

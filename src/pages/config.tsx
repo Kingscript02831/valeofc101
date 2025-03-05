@@ -697,38 +697,6 @@ const Admin = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="login_label_color">Cor dos Rótulos</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="login_label_color"
-                      type="color"
-                      value={config.login_label_color || "#CB5EEE"}
-                      onChange={(e) => setConfig({ ...config, login_label_color: e.target.value })}
-                      className="w-20"
-                    />
-                    <Input
-                      type="text"
-                      value={config.login_label_color || "#CB5EEE"}
-                      onChange={(e) => setConfig({ ...config, login_label_color: e.target.value })}
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="login_label_muted_color">Cor dos Textos Secundários</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="login_label_muted_color"
-                      type="text"
-                      value={config.login_label_muted_color || "rgba(255, 255, 255, 0.6)"}
-                      onChange={(e) => setConfig({ ...config, login_label_muted_color: e.target.value })}
-                    />
-                    <span className="w-8 h-8 rounded" style={{ backgroundColor: config.login_label_muted_color || "rgba(255, 255, 255, 0.6)" }}></span>
-                  </div>
-                  <p className="text-xs text-gray-500">Use formato rgba(255,255,255,0.6) para cores semi-transparentes</p>
-                </div>
-                
-                <div>
                   <Label htmlFor="login_developer_text">Texto do Desenvolvedor</Label>
                   <Input
                     id="login_developer_text"
