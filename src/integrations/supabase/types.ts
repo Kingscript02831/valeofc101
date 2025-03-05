@@ -1192,6 +1192,14 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           location_state: string | null
+          login_background_image: string | null
+          login_button_color: string | null
+          login_button_text_color: string | null
+          login_card_background_color: string | null
+          login_developer_text: string | null
+          login_quote_author: string | null
+          login_quote_author_title: string | null
+          login_quote_text: string | null
           login_text_color: string | null
           meta_author: string | null
           meta_description: string | null
@@ -1270,6 +1278,14 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_state?: string | null
+          login_background_image?: string | null
+          login_button_color?: string | null
+          login_button_text_color?: string | null
+          login_card_background_color?: string | null
+          login_developer_text?: string | null
+          login_quote_author?: string | null
+          login_quote_author_title?: string | null
+          login_quote_text?: string | null
           login_text_color?: string | null
           meta_author?: string | null
           meta_description?: string | null
@@ -1348,6 +1364,14 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_state?: string | null
+          login_background_image?: string | null
+          login_button_color?: string | null
+          login_button_text_color?: string | null
+          login_card_background_color?: string | null
+          login_developer_text?: string | null
+          login_quote_author?: string | null
+          login_quote_author_title?: string | null
+          login_quote_text?: string | null
           login_text_color?: string | null
           meta_author?: string | null
           meta_description?: string | null
