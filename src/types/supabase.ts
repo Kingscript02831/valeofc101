@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -19,6 +18,58 @@ export interface SiteConfiguration {
   text_color: string;
   button_primary_color: string;
   button_secondary_color: string;
+  
+  background_color: string
+  bottom_nav_icon_color: string
+  bottom_nav_primary_color: string
+  bottom_nav_secondary_color: string
+  bottom_nav_text_color: string
+  created_at: string
+  enable_dark_mode: boolean | null
+  enable_weather: boolean | null
+  font_size: string | null
+  footer_address: string | null
+  footer_address_cep: string | null
+  footer_contact_email: string | null
+  footer_contact_phone: string | null
+  footer_copyright_text: string | null
+  footer_primary_color: string
+  footer_schedule: string | null
+  footer_secondary_color: string
+  footer_social_facebook: string | null
+  footer_social_instagram: string | null
+  footer_text_color: string
+  header_alerts: Json | null
+  high_contrast: boolean | null
+  language: string | null
+  location_city: string | null
+  location_country: string | null
+  location_lat: number | null
+  location_lng: number | null
+  location_state: string | null
+  meta_author: string | null
+  meta_description: string | null
+  meta_image: string | null
+  meta_title: string | null
+  navbar_social_facebook: string | null
+  navbar_social_instagram: string | null
+  navigation_links: Json | null
+  updated_at: string
+  version: number | null
+  weather_api_key: string | null
+  login_text_color: string
+  signup_text_color: string
+  pwa_name: string | null
+  pwa_short_name: string | null
+  pwa_description: string | null
+  pwa_theme_color: string | null
+  pwa_background_color: string | null
+  pwa_install_message: string | null
+  pwa_app_icon: string | null
+  login_background_image: string | null;
+  login_button_color: string;
+  login_button_text_color: string;
+  login_footer_text: string | null;
 }
 
 export interface Profile {

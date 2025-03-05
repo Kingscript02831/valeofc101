@@ -316,3 +316,25 @@
 .comment-submit-button {
   @apply h-10 w-10 rounded-full flex items-center justify-center bg-primary text-white;
 }
+
+.auth-input {
+  @apply bg-black/20 border-gray-600 text-white backdrop-blur-sm;
+}
+
+.auth-button {
+  @apply w-full h-12 font-medium rounded-lg transition-all duration-300;
+}
+
+.auth-background {
+  @apply bg-cover bg-center;
+  min-height: 100vh;
+}
+
+.auth-container {
+  @apply w-full md:w-1/2 lg:w-2/5 xl:w-1/3 p-8 flex flex-col justify-center;
+  min-height: 100vh;
+}
+
+.gradient-button {
+  background: linear-gradient(90deg, #9b87f5, #7C3AED);
+}
