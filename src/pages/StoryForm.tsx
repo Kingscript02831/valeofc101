@@ -8,7 +8,7 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Video, Trash2, Image, Save } from "lucide-react";
+import { ArrowLeft, Camera, Video, Trash2, Image } from "lucide-react";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { transformDropboxUrl } from "../utils/mediaUtils";
@@ -93,11 +93,10 @@ const StoryForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white pt-14 pb-20">
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/story/creator")}
-          className="text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-          <ArrowLeft className="h-6 w-6" />
+    <div className="min-h-screen bg-black text-white pt-14 pb-20">
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-black">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/story/creator")}>
+          <ArrowLeft className="h-6 w-6 text-white" />
         </Button>
         <h1 className="text-lg font-semibold">
           {storyType === "image" ? "Story de Imagem" : "Story de Vídeo"}
@@ -106,10 +105,10 @@ const StoryForm = () => {
       </div>
 
       <div className="container max-w-md mx-auto p-4">
-        <Card className="overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <Card className="overflow-hidden bg-black border-gray-800">
           <CardContent className="p-4">
             {/* Preview do Story */}
-            <div className="mb-6 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="mb-6">
               <MediaCarousel
                 images={storyType === "image" ? [mediaUrl] : []}
                 videoUrls={storyType === "video" ? [mediaUrl] : []}
@@ -123,7 +122,7 @@ const StoryForm = () => {
             <div className="space-y-4">
               {/* Campo para URL da mídia */}
               <div className="space-y-2">
-                <Label htmlFor="media" className="text-gray-900 dark:text-white flex items-center gap-2">
+                <Label htmlFor="media" className="text-white flex items-center gap-2">
                   {storyType === "image" ? <Image size={16} /> : <Video size={16} />}
                   URL da {storyType === "image" ? "Imagem" : "Vídeo"}
                 </Label>
@@ -133,14 +132,13 @@ const StoryForm = () => {
                     value={mediaUrl}
                     onChange={(e) => setMediaUrl(e.target.value)}
                     placeholder={`URL da ${storyType === "image" ? "imagem" : "vídeo"}`}
-                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white flex-1"
+                    className="bg-gray-900 border-gray-700 text-white flex-1"
                   />
-                  <Button onClick={() => setIsMediaDialogOpen(true)} variant="outline" 
-                    className="border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <Button onClick={() => setIsMediaDialogOpen(true)} variant="outline" className="border-gray-700">
                     Editar
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-400">
                   URL da {storyType === "image" ? "imagem" : "vídeo"} do seu story
                 </p>
               </div>
@@ -149,10 +147,9 @@ const StoryForm = () => {
               <div className="pt-4">
                 <Button
                   onClick={handleSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 py-5"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
                   disabled={isLoading}
                 >
-                  <Save size={18} />
                   {isLoading ? "Publicando..." : "Publicar Story"}
                 </Button>
               </div>

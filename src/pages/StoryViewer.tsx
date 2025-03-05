@@ -587,10 +587,6 @@ const StoryViewer = () => {
     }
   };
 
-  const navigateToStoryManage = () => {
-    navigate("/story/manage");
-  };
-
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -630,16 +626,6 @@ const StoryViewer = () => {
 
       <div className="absolute top-4 left-0 right-0 z-10 px-4 pt-4">
         <div className="flex items-center">
-          {isOwner && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="mr-3 text-white h-8 w-8" 
-              onClick={navigateToStoryManage}
-            >
-              <MoreVertical className="h-5 w-5" />
-            </Button>
-          )}
           <Avatar className="h-10 w-10 mr-3 border border-white">
             <AvatarImage 
               src={currentStory.user?.avatar_url || undefined} 
