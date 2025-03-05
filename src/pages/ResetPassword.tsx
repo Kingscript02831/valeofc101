@@ -6,6 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toast } from "sonner";
 import { useSiteConfig } from "../hooks/useSiteConfig";
+import AvatarLogin from "../components/AvatarLogin";
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("");
@@ -39,12 +40,19 @@ const ResetPassword = () => {
 
   // Variable for the link color that matches the button color
   const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
+  
+  // Background gradient for the card
+  const cardGradient = {
+    background: `linear-gradient(135deg, ${config?.login_card_background_color || '#0F0F10'}, #171719)`,
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+    border: '1px solid rgba(255, 255, 255, 0.05)'
+  };
 
   return (
     <div className="flex min-h-screen bg-black">
       {/* Reset password form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
-        <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
+        <div className="w-full max-w-md rounded-2xl p-8" style={cardGradient}>
           {/* Site logo or title added here */}
           <div className="mb-8">
             {config?.navbar_logo_type === 'image' && config?.navbar_logo_image ? (
@@ -52,17 +60,18 @@ const ResetPassword = () => {
                 <img 
                   src={config.navbar_logo_image} 
                   alt="Logo" 
-                  className="h-24 w-24 object-cover rounded-full border-2 border-white/20"
+                  className="h-32 w-32 object-cover rounded-full border-2 border-white/20"
+                  style={{ marginTop: '-2rem' }}
                 />
               </div>
             ) : (
-              <h2 className="text-3xl font-bold text-center" style={{ color: config?.login_button_color || '#CB5EEE' }}>
+              <h2 className="text-4xl font-bold text-center" style={{ color: config?.login_button_color || '#CB5EEE' }}>
                 {config?.navbar_logo_text || 'Vale Notícias'}
               </h2>
             )}
           </div>
           
-          <h1 className="text-2xl font-bold mb-8 text-center">Recuperar Senha</h1>
+          <h1 className="text-2xl font-bold mb-8 text-center">Recuperar Senha 🔐</h1>
           
           {submitted ? (
             <div className="text-center space-y-6">
@@ -77,18 +86,24 @@ const ResetPassword = () => {
               <Button
                 className="mt-6"
                 style={{ 
-                  backgroundColor: config?.login_button_color || '#CB5EEE', 
+                  backgroundImage: `linear-gradient(to right, ${config?.login_button_color || '#CB5EEE'}, ${config?.login_button_color ? config.login_button_color + '99' : '#9b5ee6'})`,
                   color: config?.login_button_text_color || '#FFFFFF'
                 }}
               >
-                <Link to="/login">Voltar para o Login</Link>
+                <Link to="/login">Voltar para o Login 🏠</Link>
               </Button>
               
-              {/* Quote section added for the success state */}
-              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm">
-                <p className="text-white/90 text-sm italic mb-2">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
-                <p className="text-white/90 text-sm font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
-                <p className="text-white/70 text-xs">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
+              {/* Quote section with avatar */}
+              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm border border-white/5">
+                <p className="text-white/90 text-sm italic mb-2">
+                  <span className="text-xl mr-1">💭</span> 
+                  {config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}
+                </p>
+                
+                <AvatarLogin 
+                  author={config?.login_quote_author || 'Jaron Lanier'}
+                  title={config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}
+                />
               </div>
             </div>
           ) : (
@@ -103,7 +118,7 @@ const ResetPassword = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="bg-black border-b-[1px] border-t-0 border-l-0 border-r-0 border-gray-700 text-white placeholder:text-gray-500 rounded-none focus:ring-0"
+                    className="bg-black/40 border-0 text-white placeholder:text-gray-500 rounded-lg focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
                 
@@ -111,12 +126,12 @@ const ResetPassword = () => {
                   type="submit" 
                   className="w-full py-6 text-center rounded-lg font-medium"
                   style={{ 
-                    backgroundColor: config?.login_button_color || '#CB5EEE', 
+                    backgroundImage: `linear-gradient(to right, ${config?.login_button_color || '#CB5EEE'}, ${config?.login_button_color ? config.login_button_color + '99' : '#9b5ee6'})`,
                     color: config?.login_button_text_color || '#FFFFFF'
                   }}
                   disabled={loading}
                 >
-                  {loading ? "Enviando..." : "Enviar Link de Recuperação"}
+                  {loading ? "Enviando..." : "Enviar Link de Recuperação ✉️"}
                 </Button>
                 
                 <div className="text-center">
@@ -126,11 +141,17 @@ const ResetPassword = () => {
                 </div>
               </form>
               
-              {/* Quote section moved below the back to login link */}
-              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm">
-                <p className="text-white/90 text-sm italic mb-2">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
-                <p className="text-white/90 text-sm font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
-                <p className="text-white/70 text-xs">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
+              {/* Quote section with avatar */}
+              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm border border-white/5">
+                <p className="text-white/90 text-sm italic mb-2">
+                  <span className="text-xl mr-1">💭</span> 
+                  {config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}
+                </p>
+                
+                <AvatarLogin 
+                  author={config?.login_quote_author || 'Jaron Lanier'}
+                  title={config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}
+                />
               </div>
             </>
           )}
