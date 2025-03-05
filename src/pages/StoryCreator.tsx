@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Music, Camera, Trash2, Edit } from "lucide-react";
+import { X, Camera, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../integrations/supabase/client";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
@@ -115,14 +115,14 @@ const StoryCreator = () => {
       {/* Content - Story Creation Options */}
       <div className="p-4">
         <div className="grid grid-cols-2 gap-4">
-          {/* Image Story Option */}
+          {/* Image Story Option - Changed Music icon to Camera */}
           <div 
             className="cursor-pointer rounded-xl overflow-hidden"
             onClick={() => setIsImageDialogOpen(true)}
           >
             <div className="bg-gradient-to-br from-teal-400 to-blue-400 p-6 flex flex-col items-center justify-center aspect-square">
               <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                <Music className="h-8 w-8 text-gray-800" />
+                <Camera className="h-8 w-8 text-gray-800" />
               </div>
               <span className="text-white text-xl font-semibold">Imagem</span>
             </div>
@@ -147,7 +147,7 @@ const StoryCreator = () => {
       <div className="mt-8 border-t border-gray-800 pt-4">
         <div className="px-4 flex justify-between items-center">
           <h2 className="text-xl font-semibold">Galeria</h2>
-          <Button variant="outline" className="border-gray-600 text-white">
+          <Button variant="outline" className="border-gray-600 text-black dark:text-white">
             Selecionar vários
           </Button>
         </div>

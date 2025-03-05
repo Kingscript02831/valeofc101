@@ -60,9 +60,7 @@ const PhotoUrlDialog = ({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {textInputOnly 
-              ? "Digite o texto para seu story" 
-              : "Cole a URL da mídia nos formatos suportados (jpg, png, mp4, webm, etc)"}
+            {textInputOnly ? "Digite o texto para seu story" : ""}
           </DialogDescription>
         </DialogHeader>
         
