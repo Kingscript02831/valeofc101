@@ -1,15 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Camera, Trash2, Edit, Check, Square, CheckSquare, Dropbox } from "lucide-react";
+import { X, Camera, Trash2, Edit, Check, Square, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../integrations/supabase/client";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { transformDropboxUrl } from "../utils/mediaUtils";
 import { Checkbox } from "@/components/ui/checkbox";
-import DropboxFilePicker from "../components/DropboxFilePicker";
-import { useDropbox } from "../hooks/useDropbox";
 
 interface GalleryItem {
   id: string;
@@ -23,14 +22,10 @@ const StoryCreator = () => {
   const navigate = useNavigate();
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
-  const [isDropboxPickerOpen, setIsDropboxPickerOpen] = useState(false);
-  const [currentPickerType, setCurrentPickerType] = useState<'image' | 'video'>('image');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  
-  const { isAuthenticated } = useDropbox();
   
   useEffect(() => {
     fetchUserMedia();
@@ -53,6 +48,7 @@ const StoryCreator = () => {
         
       if (error) throw error;
       
+      // Convert the data to match the GalleryItem interface
       const mappedData = (data || []).map(item => ({
         id: item.id,
         type: item.media_type as "image" | "video" | "text",
@@ -97,6 +93,7 @@ const StoryCreator = () => {
     
     if (confirm(`Tem certeza que deseja excluir ${selectedItems.length} item(s) selecionado(s)?`)) {
       try {
+        // Delete each selected item
         for (const id of selectedItems) {
           const { error } = await supabase
             .from("stories")
@@ -106,6 +103,7 @@ const StoryCreator = () => {
           if (error) throw error;
         }
         
+        // Update the gallery items
         setGalleryItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
         setSelectedItems([]);
         setIsSelectionMode(false);
@@ -136,6 +134,7 @@ const StoryCreator = () => {
     }
   };
   
+  // Function to render text content from JSON
   const renderTextContent = (jsonString: string) => {
     try {
       const textData = JSON.parse(jsonString);
@@ -152,110 +151,49 @@ const StoryCreator = () => {
     }
   };
   
-  const openDropboxPicker = (type: 'image' | 'video') => {
-    setCurrentPickerType(type);
-    setIsDropboxPickerOpen(true);
-  };
-  
-  const handleDropboxFileSelect = (url: string, type: 'image' | 'video') => {
-    const transformedUrl = transformDropboxUrl(url);
-    navigate("/story/new", { state: { type, url: transformedUrl } });
-  };
-  
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Header */}
       <div className="sticky top-0 z-50 flex items-center justify-between p-4 bg-black">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="text-white">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/story/manage")} className="text-white">
           <X className="h-8 w-8" />
         </Button>
         <h1 className="text-xl font-semibold">Criar story</h1>
         <div className="w-8" />
       </div>
 
+      {/* Content - Story Creation Options */}
       <div className="p-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="cursor-pointer rounded-xl overflow-hidden">
+          {/* Image Story Option - Changed Music icon to Camera */}
+          <div 
+            className="cursor-pointer rounded-xl overflow-hidden"
+            onClick={() => setIsImageDialogOpen(true)}
+          >
             <div className="bg-gradient-to-br from-teal-400 to-blue-400 p-6 flex flex-col items-center justify-center aspect-square">
               <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4">
                 <Camera className="h-8 w-8 text-gray-800" />
               </div>
               <span className="text-white text-xl font-semibold">Imagem</span>
-              
-              <div className="mt-4 flex flex-col gap-2 w-full">
-                <Button 
-                  variant="secondary" 
-                  onClick={() => setIsImageDialogOpen(true)}
-                  className="bg-white/20 hover:bg-white/30 text-white"
-                >
-                  URL de Imagem
-                </Button>
-                
-                <Button 
-                  variant="secondary" 
-                  onClick={() => openDropboxPicker('image')}
-                  className="bg-blue-500/80 hover:bg-blue-500 text-white flex items-center gap-2"
-                  disabled={!isAuthenticated}
-                >
-                  <Dropbox className="h-4 w-4" />
-                  Dropbox
-                </Button>
-              </div>
             </div>
           </div>
           
-          <div className="cursor-pointer rounded-xl overflow-hidden">
+          {/* Video Story Option */}
+          <div 
+            className="cursor-pointer rounded-xl overflow-hidden"
+            onClick={() => setIsVideoDialogOpen(true)}
+          >
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 flex flex-col items-center justify-center aspect-square">
               <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4">
                 <Camera className="h-8 w-8 text-gray-800" />
               </div>
               <span className="text-white text-xl font-semibold">Vídeo</span>
-              
-              <div className="mt-4 flex flex-col gap-2 w-full">
-                <Button 
-                  variant="secondary" 
-                  onClick={() => setIsVideoDialogOpen(true)}
-                  className="bg-white/20 hover:bg-white/30 text-white"
-                >
-                  URL de Vídeo
-                </Button>
-                
-                <Button 
-                  variant="secondary" 
-                  onClick={() => openDropboxPicker('video')}
-                  className="bg-blue-500/80 hover:bg-blue-500 text-white flex items-center gap-2"
-                  disabled={!isAuthenticated}
-                >
-                  <Dropbox className="h-4 w-4" />
-                  Dropbox
-                </Button>
-              </div>
             </div>
           </div>
         </div>
       </div>
       
-      {!isAuthenticated && (
-        <div className="p-4">
-          <Card className="bg-gray-900">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
-                <Dropbox className="h-8 w-8 text-blue-500" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white">Conectar ao Dropbox</h3>
-                  <p className="text-sm text-gray-400">Acesse suas fotos e vídeos do Dropbox</p>
-                </div>
-                <Button 
-                  onClick={() => navigate('/dropbox-auth')}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Conectar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
+      {/* Gallery Section */}
       <div className="mt-8 border-t border-gray-800 pt-4">
         <div className="px-4 flex justify-between items-center">
           <h2 className="text-xl font-semibold">Galeria</h2>
@@ -289,6 +227,7 @@ const StoryCreator = () => {
           </div>
         </div>
         
+        {/* Gallery Grid - Changed to 2 columns */}
         <div className="mt-4">
           {isLoading ? (
             <div className="p-8 text-center">
@@ -340,6 +279,7 @@ const StoryCreator = () => {
                     />
                   )}
                   
+                  {/* Control overlay - Hidden in selection mode */}
                   {!isSelectionMode && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <Button 
@@ -361,6 +301,7 @@ const StoryCreator = () => {
                     </div>
                   )}
                   
+                  {/* Video duration indicator */}
                   {item.type === 'video' && !isSelectionMode && (
                     <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-0.5 rounded text-xs">
                       1:00
@@ -373,6 +314,7 @@ const StoryCreator = () => {
         </div>
       </div>
       
+      {/* Dialog for adding image */}
       <PhotoUrlDialog
         isOpen={isImageDialogOpen}
         onClose={() => setIsImageDialogOpen(false)}
@@ -383,6 +325,7 @@ const StoryCreator = () => {
         title="Adicionar Imagem"
       />
       
+      {/* Dialog for adding video */}
       <PhotoUrlDialog
         isOpen={isVideoDialogOpen}
         onClose={() => setIsVideoDialogOpen(false)}
@@ -391,13 +334,6 @@ const StoryCreator = () => {
           navigate("/story/new", { state: { type: "video", url: transformedUrl } });
         }}
         title="Adicionar Vídeo"
-      />
-      
-      <DropboxFilePicker
-        isOpen={isDropboxPickerOpen}
-        onClose={() => setIsDropboxPickerOpen(false)}
-        onSelectFile={handleDropboxFileSelect}
-        mediaType={currentPickerType}
       />
     </div>
   );
