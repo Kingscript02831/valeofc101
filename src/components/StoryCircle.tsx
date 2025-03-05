@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
@@ -68,7 +67,6 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
 
   const handleClick = () => {
     if (isCurrentUser) {
-      // Changed to redirect to story/manage instead of story/view/:userId
       navigate(`/story/manage`);
     } else if (storiesData?.hasStories) {
       navigate(`/story/view/${userId}`);
