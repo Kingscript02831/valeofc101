@@ -1,104 +1,108 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../integrations/supabase/client";
 import { Button } from "../components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "../components/ui/input";
 import { toast } from "sonner";
-import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { mapAuthError } from "@/utils/auth-errors";
+import { useSiteConfig } from "../hooks/useSiteConfig";
+import { translateAuthError } from "../utils/auth-errors";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { data: config } = useSiteConfig();
-  
-  // Check if user is already logged in
+  const { data: config, isLoading: configLoading } = useSiteConfig();
+
   useEffect(() => {
-    const checkSession = async () => {
+    const getSession = async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session) {
+      if (data?.session) {
         navigate("/");
       }
     };
-    checkSession();
+    getSession();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      if (error) {
-        const errorMessage = mapAuthError(error.message);
-        toast.error(errorMessage);
-        return;
-      }
-
-      // Success
+      if (error) throw error;
       toast.success("Login realizado com sucesso!");
       navigate("/");
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      toast.error("Ocorreu um erro inesperado");
+    } catch (error: any) {
+      const errorMessage = translateAuthError(error.message);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
-  
-  // Get background image from config
-  const backgroundImage = config?.login_background_image 
-    ? `url(${config.login_background_image})` 
-    : 'linear-gradient(to right, #0f0f10, #2d2d32)';
+
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  if (configLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
+  }
+
+  // Variable for the link color that matches the button color
+  const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
-      {/* Left side with background image and quote */}
-      <div 
-        className="hidden md:flex md:w-1/2 bg-cover bg-center relative"
-        style={{ backgroundImage }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40 flex flex-col justify-end p-12">
-          <div className="max-w-md">
-            <p className="text-white text-xl mb-4 font-light">
-              {config?.login_quote_text || "No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."}
-            </p>
-            <div>
-              <p className="text-white font-semibold">
-                {config?.login_quote_author || "Jaron Lanier"}
-              </p>
-              <p className="text-white/70 text-sm">
-                {config?.login_quote_author_title || "Cientista da computação e especialista em realidade virtual."}
-              </p>
-            </div>
+    <div className="flex flex-col md:flex-row min-h-screen">
+      {/* Left side with image and quote */}
+      <div className="relative flex-1 hidden md:flex flex-col justify-between bg-gradient-to-r from-purple-800 to-purple-900 overflow-hidden">
+        {config?.login_background_image ? (
+          <div className="absolute inset-0 z-0">
+            <img
+              src={config.login_background_image}
+              alt="Login"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
           </div>
-          <p className="text-white/60 text-sm mt-12">
-            {config?.login_developer_text || "2025 | Desenvolvido por Vinícius Dev"}
-          </p>
+        ) : (
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/lovable-uploads/587a2669-ca00-4bd7-a223-008d7d9ace86.png"
+              alt="Login"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
+          </div>
+        )}
+        <div className="relative z-10 flex flex-col justify-between h-full p-12">
+          <div></div>
+          <div className="bg-black/30 p-6 rounded-2xl backdrop-blur-sm">
+            <p className="text-white text-lg font-medium mb-4">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
+            <p className="text-white font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
+            <p className="text-white/70 text-sm">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
+          </div>
         </div>
       </div>
-      
+
       {/* Right side with login form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
         <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
-          {/* Site logo or title added here - agora maior */}
+          {/* Site logo or title added here */}
           {config?.navbar_logo_type === 'image' && config?.navbar_logo_image ? (
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-6">
               <img 
                 src={config.navbar_logo_image} 
                 alt="Logo" 
-                className="h-20 w-auto object-contain" 
+                className="h-12 w-auto object-contain"
               />
             </div>
           ) : (
-            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: config?.login_button_color || '#CB5EEE' }}>
+            <h2 className="text-xl font-bold text-center mb-6" style={{ color: config?.login_button_color || '#CB5EEE' }}>
               {config?.navbar_logo_text || 'Vale Notícias'}
             </h2>
           )}
@@ -106,37 +110,62 @@ const Login = () => {
           <h1 className="text-2xl font-bold mb-8 text-center">Vamos começar</h1>
           
           <form onSubmit={handleLogin} className="space-y-6">
-            <div>
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm">E-mail</label>
               <Input
+                id="email"
                 type="email"
-                placeholder="Email"
+                placeholder="Digite seu melhor e-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-transparent border-0 border-b border-gray-700 rounded-none focus:ring-0 px-0 py-2 text-white placeholder-gray-500"
                 required
+                className="bg-black border-gray-700 text-white placeholder:text-gray-500"
               />
             </div>
-            <div>
-              <Input
-                type="password"
-                placeholder="Senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-transparent border-0 border-b border-gray-700 rounded-none focus:ring-0 px-0 py-2 text-white placeholder-gray-500"
-                required
-              />
+            
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm">Senha</label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Digite sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-black border-gray-700 text-white placeholder:text-gray-500 pr-10"
+                />
+                <button 
+                  type="button"
+                  onClick={toggleShowPassword}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <div className="text-right">
+                <Link to="/reset-password" className="text-sm hover:underline" style={linkColorStyle}>
+                  Esqueceu a senha?
+                </Link>
+              </div>
             </div>
-            <div className="text-right">
-              <Link to="/reset-password" className="text-sm hover:underline" style={{ color: config?.login_button_color || '#CB5EEE' }}>
-                Esqueceu a senha?
-              </Link>
-            </div>
-            <Button
-              type="submit"
-              className="w-full py-2 rounded-xl"
+            
+            <Button 
+              type="submit" 
+              className="w-full py-6 text-center rounded-lg font-medium"
               style={{ 
-                backgroundColor: config?.login_button_color || '#CB5EEE',
-                color: config?.login_button_text_color || '#FFFFFF' 
+                backgroundColor: config?.login_button_color || '#CB5EEE', 
+                color: config?.login_button_text_color || '#FFFFFF'
               }}
               disabled={loading}
             >
@@ -144,15 +173,14 @@ const Login = () => {
             </Button>
           </form>
           
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              Não tem uma conta?{" "}
-              <Link to="/signup" className="hover:underline" style={{ color: config?.login_button_color || '#CB5EEE' }}>
-                Cadastre-se
-              </Link>
-            </p>
-          </div>
+          <p className="mt-6 text-center text-sm text-gray-400">
+            Não possui uma conta? <Link to="/signup" className="hover:underline" style={linkColorStyle}>Criar conta</Link>
+          </p>
         </div>
+        
+        <p className="mt-8 text-sm text-gray-500">
+          {config?.login_developer_text || '2025 | Desenvolvido por Vinícius Dev'}
+        </p>
       </div>
     </div>
   );
