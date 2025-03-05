@@ -53,42 +53,6 @@
     @apply bg-background text-foreground antialiased;
   }
 
-  .auth-mobile-background {
-    @apply fixed inset-0 z-0 md:hidden;
-  }
-
-  .auth-mobile-background img {
-    @apply w-full h-full object-cover;
-  }
-
-  .auth-mobile-background-overlay {
-    @apply absolute inset-0 bg-black/60;
-  }
-
-  .auth-card {
-    @apply relative z-10 w-full max-w-md bg-black rounded-2xl p-8;
-  }
-
-  .auth-label {
-    @apply block text-sm font-medium;
-  }
-
-  .auth-input {
-    @apply bg-black border-gray-700 text-white placeholder:text-gray-500;
-  }
-
-  .auth-link {
-    @apply text-sm hover:underline;
-  }
-
-  .auth-button {
-    @apply w-full py-6 text-center rounded-lg font-medium;
-  }
-
-  .auth-footnote {
-    @apply mt-8 text-sm text-gray-500 relative z-10;
-  }
-
   .glass {
     @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl dark:bg-black/30;
   }

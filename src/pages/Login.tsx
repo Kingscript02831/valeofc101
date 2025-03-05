@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { supabase } from "../integrations/supabase/client";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { toast } from "sonner";
-import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { translateAuthError } from "@/utils/auth-errors";
+import { useSiteConfig } from "../hooks/useSiteConfig";
+import { translateAuthError } from "../utils/auth-errors";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -53,22 +53,10 @@ const Login = () => {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
 
-  // Variable for the link color that matches the button color
-  const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
-  const labelColorStyle = { color: config?.login_label_color || '#CB5EEE' };
-  const mutedColorStyle = { color: config?.login_label_muted_color || 'rgba(255, 255, 255, 0.5)' };
-
-  // Background style based on login_background_image
-  const leftSideBackgroundStyle = config?.login_background_image ? {
-    backgroundImage: `url(${config.login_background_image})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-  } : {};
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Left side with image and quote - hidden on mobile */}
-      <div className="relative flex-1 hidden md:flex flex-col justify-between bg-gradient-to-r from-purple-800 to-purple-900 overflow-hidden" style={leftSideBackgroundStyle}>
+      {/* Left side with image and quote */}
+      <div className="relative flex-1 hidden md:flex flex-col justify-between bg-gradient-to-r from-purple-800 to-purple-900 overflow-hidden">
         {config?.login_background_image ? (
           <div className="absolute inset-0 z-0">
             <img
@@ -79,7 +67,14 @@ const Login = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
           </div>
         ) : (
-          <div className="absolute inset-0 z-0 bg-gradient-to-r from-purple-800 to-purple-900"></div>
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/lovable-uploads/587a2669-ca00-4bd7-a223-008d7d9ace86.png"
+              alt="Login"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
+          </div>
         )}
         <div className="relative z-10 flex flex-col justify-between h-full p-12">
           <div></div>
@@ -93,24 +88,12 @@ const Login = () => {
 
       {/* Right side with login form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
-        {/* Mobile background image */}
-        {config?.login_background_image && (
-          <div className="fixed inset-0 z-0 md:hidden">
-            <img 
-              src={config.login_background_image} 
-              alt="Background" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/60"></div>
-          </div>
-        )}
-        
-        <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8 relative z-10" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
+        <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
           <h1 className="text-2xl font-bold mb-8 text-center">Vamos começar</h1>
           
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm" style={labelColorStyle}>E-mail</label>
+              <label htmlFor="email" className="block text-sm">E-mail</label>
               <Input
                 id="email"
                 type="email"
@@ -119,14 +102,11 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="bg-black border-gray-700 text-white placeholder:text-gray-500"
-                style={{
-                  "::placeholder": mutedColorStyle
-                } as React.CSSProperties}
               />
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm" style={labelColorStyle}>Senha</label>
+              <label htmlFor="password" className="block text-sm">Senha</label>
               <div className="relative">
                 <Input
                   id="password"
@@ -156,7 +136,7 @@ const Login = () => {
                 </button>
               </div>
               <div className="text-right">
-                <Link to="/reset-password" className="text-sm hover:underline" style={linkColorStyle}>
+                <Link to="/reset-password" className="text-sm text-purple-400 hover:underline">
                   Esqueceu a senha?
                 </Link>
               </div>
@@ -175,12 +155,12 @@ const Login = () => {
             </Button>
           </form>
           
-          <p className="mt-6 text-center text-sm" style={mutedColorStyle}>
-            Não possui uma conta? <Link to="/signup" className="hover:underline" style={linkColorStyle}>Criar conta</Link>
+          <p className="mt-6 text-center text-sm text-gray-400">
+            Não possui uma conta? <Link to="/signup" className="text-purple-400 hover:underline">Criar conta</Link>
           </p>
         </div>
         
-        <p className="mt-8 text-sm relative z-10" style={mutedColorStyle}>
+        <p className="mt-8 text-sm text-gray-500">
           {config?.login_developer_text || '2025 | Desenvolvido por Vinícius Dev'}
         </p>
       </div>
