@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -8,6 +7,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { transformDropboxUrl } from "../utils/mediaUtils";
 
 interface MediaCarouselProps {
   images: string[];
@@ -26,10 +26,14 @@ export const MediaCarousel = ({
   cropMode = 'cover',
   showControls = true 
 }: MediaCarouselProps) => {
+  // Transform all URLs first
+  const processedImages = images.map(url => transformDropboxUrl(url));
+  const processedVideos = videoUrls.map(url => transformDropboxUrl(url));
+  
   // Combine all media into one array
   const allMedia = [
-    ...images.map(url => ({ type: "image" as const, url })),
-    ...videoUrls.map(url => ({ type: "video" as const, url }))
+    ...processedImages.map(url => ({ type: "image" as const, url })),
+    ...processedVideos.map(url => ({ type: "video" as const, url }))
   ];
 
   const [mediaLoaded, setMediaLoaded] = useState<Record<string, boolean>>({});
@@ -42,7 +46,7 @@ export const MediaCarousel = ({
   // e garantir que as imagens sejam armazenadas no cache do navegador
   useEffect(() => {
     let loadedCount = 0;
-    const imageList = images.filter(url => url); // Filtrar URLs vazias
+    const imageList = processedImages.filter(url => url); // Filtrar URLs vazias
     const totalImages = imageList.length;
     
     // Função para pré-carregar imagens
@@ -121,7 +125,7 @@ export const MediaCarousel = ({
         img.onerror = null;
       });
     };
-  }, [images]);
+  }, [processedImages]);
 
   const getVideoUrl = (url: string) => {
     if (url.includes('youtube.com/watch?v=')) {

@@ -1,9 +1,11 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Plus } from "lucide-react";
+import { transformDropboxUrl } from "../utils/mediaUtils";
 
 interface FollowingProfile {
   id: string;
@@ -124,7 +126,7 @@ const StoriesBar = () => {
               <div className="relative">
                 <Avatar className="w-16 h-16 border-2 border-gray-600">
                   {currentUser.avatar_url ? (
-                    <AvatarImage src={currentUser.avatar_url} alt={currentUser.username || "You"} />
+                    <AvatarImage src={transformDropboxUrl(currentUser.avatar_url)} alt={currentUser.username || "You"} />
                   ) : (
                     <AvatarFallback>{currentUser.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                   )}
@@ -150,7 +152,7 @@ const StoriesBar = () => {
                 }`}
               >
                 {profile.avatar_url ? (
-                  <AvatarImage src={profile.avatar_url} alt={profile.username || ""} />
+                  <AvatarImage src={transformDropboxUrl(profile.avatar_url)} alt={profile.username || ""} />
                 ) : (
                   <AvatarFallback>{profile.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                 )}

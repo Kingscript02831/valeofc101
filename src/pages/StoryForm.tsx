@@ -8,9 +8,10 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Video, Trash2, Link } from "lucide-react";
+import { ArrowLeft, Camera, Video, Trash2, Image } from "lucide-react";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { transformDropboxUrl } from "../utils/mediaUtils";
 
 interface StoryFormState {
   type: "image" | "video";
@@ -25,10 +26,8 @@ const StoryForm = () => {
   
   const [storyType, setStoryType] = useState<"image" | "video">(formState?.type || "image");
   const [mediaUrl, setMediaUrl] = useState<string>(formState?.url || "");
-  const [linkUrl, setLinkUrl] = useState<string>("");
-  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
-  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
 
   useEffect(() => {
     // If there's no state data, redirect to the creator
@@ -36,19 +35,6 @@ const StoryForm = () => {
       navigate("/story/creator");
     }
   }, [formState, navigate]);
-
-  // Função para transformar URLs do Dropbox, mudando 0 para 1 no final
-  const transformDropboxUrl = (url: string): string => {
-    if (!url) return url;
-    
-    // Verifica se é uma URL do Dropbox
-    if (url.includes('dropbox.com') && url.endsWith('0')) {
-      // Substitui o 0 final por 1
-      return url.slice(0, -1) + '1';
-    }
-    
-    return url;
-  };
 
   const createStoryMutation = useMutation({
     mutationFn: async () => {
@@ -61,8 +47,7 @@ const StoryForm = () => {
       const payload = {
         user_id: user.id,
         media_url: transformedMediaUrl,
-        media_type: storyType,
-        link_url: linkUrl || null
+        media_type: storyType
       };
 
       const { data, error } = await supabase
@@ -85,10 +70,9 @@ const StoryForm = () => {
     },
   });
 
-  const handleMediaAdd = (url: string, type: "image" | "video") => {
-    // Transforma a URL do Dropbox no momento de adicionar
-    const transformedUrl = transformDropboxUrl(url);
-    setStoryType(type);
+  const handleMediaUpdate = (newUrl: string) => {
+    // Transform Dropbox URL if needed
+    const transformedUrl = transformDropboxUrl(newUrl);
     setMediaUrl(transformedUrl);
   };
 
@@ -98,13 +82,13 @@ const StoryForm = () => {
       return;
     }
     
-    setIsUploading(true);
+    setIsLoading(true);
     try {
       await createStoryMutation.mutateAsync();
     } catch (error) {
       console.error("Error submitting story:", error);
     } finally {
-      setIsUploading(false);
+      setIsLoading(false);
     }
   };
 
@@ -123,108 +107,64 @@ const StoryForm = () => {
       <div className="container max-w-md mx-auto p-4">
         <Card className="overflow-hidden bg-black border-gray-800">
           <CardContent className="p-4">
-            {mediaUrl ? (
-              <div className="mb-4">
-                <MediaCarousel
-                  images={storyType === "image" ? [mediaUrl] : []}
-                  videoUrls={storyType === "video" ? [mediaUrl] : []}
-                  title="Preview do Story"
-                  autoplay={true}
-                  showControls={true}
-                />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-8 gap-4 border-2 border-dashed border-gray-700 rounded-lg mb-4">
-                <p className="text-gray-400 text-center">
-                  {storyType === "image" 
-                    ? "Adicione uma imagem para o seu story" 
-                    : "Adicione um vídeo para o seu story"}
-                </p>
-                <div className="flex gap-4">
-                  {storyType === "image" ? (
-                    <Button
-                      onClick={() => setIsPhotoDialogOpen(true)}
-                      variant="outline"
-                      className="flex items-center gap-2 border-gray-700 text-white"
-                    >
-                      <Camera size={18} />
-                      Imagem
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => setIsVideoDialogOpen(true)}
-                      variant="outline"
-                      className="flex items-center gap-2 border-gray-700 text-white"
-                    >
-                      <Video size={18} />
-                      Vídeo
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Preview do Story */}
+            <div className="mb-6">
+              <MediaCarousel
+                images={storyType === "image" ? [mediaUrl] : []}
+                videoUrls={storyType === "video" ? [mediaUrl] : []}
+                title="Preview do Story"
+                autoplay={true}
+                showControls={true}
+              />
+            </div>
 
-            {/* Campos adicionais para link */}
-            {mediaUrl && (
-              <div className="space-y-4 mb-4">
-                {/* Campo para adicionar link */}
-                <div className="space-y-2">
-                  <Label htmlFor="link" className="text-white flex items-center gap-2">
-                    <Link size={16} />
-                    Adicionar Link
-                  </Label>
+            {/* Formulário de edição */}
+            <div className="space-y-4">
+              {/* Campo para URL da mídia */}
+              <div className="space-y-2">
+                <Label htmlFor="media" className="text-white flex items-center gap-2">
+                  {storyType === "image" ? <Image size={16} /> : <Video size={16} />}
+                  URL da {storyType === "image" ? "Imagem" : "Vídeo"}
+                </Label>
+                <div className="flex gap-2">
                   <Input
-                    id="link"
-                    value={linkUrl}
-                    onChange={(e) => setLinkUrl(e.target.value)}
-                    placeholder="https://exemplo.com"
-                    className="bg-gray-900 border-gray-700 text-white"
+                    id="media"
+                    value={mediaUrl}
+                    onChange={(e) => setMediaUrl(e.target.value)}
+                    placeholder={`URL da ${storyType === "image" ? "imagem" : "vídeo"}`}
+                    className="bg-gray-900 border-gray-700 text-white flex-1"
                   />
-                  <p className="text-xs text-gray-400">
-                    Adicione um link para direcionar os visualizadores
-                  </p>
+                  <Button onClick={() => setIsMediaDialogOpen(true)} variant="outline" className="border-gray-700">
+                    Editar
+                  </Button>
                 </div>
+                <p className="text-xs text-gray-400">
+                  URL da {storyType === "image" ? "imagem" : "vídeo"} do seu story
+                </p>
               </div>
-            )}
 
-            <div className="flex justify-between gap-4">
-              {mediaUrl && (
+              {/* Botões de ação */}
+              <div className="pt-4">
                 <Button
-                  variant="outline"
-                  onClick={() => setMediaUrl("")}
-                  className="flex-1 border-gray-700 text-white"
+                  onClick={handleSubmit}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+                  disabled={isLoading}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Remover
+                  {isLoading ? "Publicando..." : "Publicar Story"}
                 </Button>
-              )}
-              
-              <Button
-                onClick={handleSubmit}
-                className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                disabled={!mediaUrl || isUploading}
-              >
-                {isUploading ? "Publicando..." : "Publicar Story"}
-              </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Dialog for adding image */}
+      {/* Dialog para editar URL da mídia */}
       <PhotoUrlDialog
-        isOpen={isPhotoDialogOpen}
-        onClose={() => setIsPhotoDialogOpen(false)}
-        onConfirm={(url) => handleMediaAdd(url, "image")}
-        title="Adicionar Imagem"
-      />
-
-      {/* Dialog for adding video */}
-      <PhotoUrlDialog
-        isOpen={isVideoDialogOpen}
-        onClose={() => setIsVideoDialogOpen(false)}
-        onConfirm={(url) => handleMediaAdd(url, "video")}
-        title="Adicionar Vídeo"
+        isOpen={isMediaDialogOpen}
+        onClose={() => setIsMediaDialogOpen(false)}
+        onConfirm={handleMediaUpdate}
+        title={`Editar URL da ${storyType === "image" ? "Imagem" : "Vídeo"}`}
+        placeholder={`Cole a URL da ${storyType === "image" ? "imagem" : "vídeo"} aqui`}
       />
     </div>
   );

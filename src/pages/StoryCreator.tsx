@@ -7,6 +7,7 @@ import { X, Music, Camera, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../integrations/supabase/client";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
+import { transformDropboxUrl } from "../utils/mediaUtils";
 
 interface GalleryItem {
   id: string;
@@ -151,7 +152,7 @@ const StoryCreator = () => {
           </Button>
         </div>
         
-        {/* Gallery Grid */}
+        {/* Gallery Grid - Changed to 2 columns */}
         <div className="mt-4">
           {isLoading ? (
             <div className="p-8 text-center">
@@ -163,7 +164,7 @@ const StoryCreator = () => {
               <p className="text-gray-400">Nenhum item na galeria</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-0.5">
+            <div className="grid grid-cols-2 gap-0.5">
               {galleryItems.map((item) => (
                 <div key={item.id} className="relative aspect-square bg-gray-800">
                   {item.type === 'text' ? (
@@ -172,12 +173,12 @@ const StoryCreator = () => {
                     </div>
                   ) : item.type === 'video' ? (
                     <video 
-                      src={item.url}
+                      src={transformDropboxUrl(item.url)}
                       className="object-cover w-full h-full"
                     />
                   ) : (
                     <img 
-                      src={item.url} 
+                      src={transformDropboxUrl(item.url)} 
                       alt="Gallery item" 
                       className="object-cover w-full h-full"
                     />
@@ -203,7 +204,7 @@ const StoryCreator = () => {
                     </Button>
                   </div>
                   
-                  {/* Video duration indicator - Alterado de 0:30 para 1:00 */}
+                  {/* Video duration indicator */}
                   {item.type === 'video' && (
                     <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-0.5 rounded text-xs">
                       1:00
@@ -221,7 +222,8 @@ const StoryCreator = () => {
         isOpen={isImageDialogOpen}
         onClose={() => setIsImageDialogOpen(false)}
         onConfirm={(url) => {
-          navigate("/story/new", { state: { type: "image", url } });
+          const transformedUrl = transformDropboxUrl(url);
+          navigate("/story/new", { state: { type: "image", url: transformedUrl } });
         }}
         title="Adicionar Imagem"
       />
@@ -231,7 +233,8 @@ const StoryCreator = () => {
         isOpen={isVideoDialogOpen}
         onClose={() => setIsVideoDialogOpen(false)}
         onConfirm={(url) => {
-          navigate("/story/new", { state: { type: "video", url } });
+          const transformedUrl = transformDropboxUrl(url);
+          navigate("/story/new", { state: { type: "video", url: transformedUrl } });
         }}
         title="Adicionar Vídeo"
       />
