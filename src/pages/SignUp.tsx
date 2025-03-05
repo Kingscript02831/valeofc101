@@ -75,7 +75,7 @@ const SignUp = () => {
         password,
         options: {
           data: {
-            full_name: fullName, // This now matches the field name used in the handle_new_user function
+            full_name: fullName,
             username,
             phone,
             birth_date: birthDate,
@@ -107,6 +107,9 @@ const SignUp = () => {
   if (configLoading || locationsLoading) {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
+
+  // Variable for the link color that matches the button color
+  const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -144,6 +147,15 @@ const SignUp = () => {
       {/* Right side with signup form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
         <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
+          {/* Fixed logo image */}
+          <div className="mb-8 flex justify-center">
+            <img 
+              src="/logologin.png" 
+              alt="Logo" 
+              className="h-24 w-auto object-contain"
+            />
+          </div>
+          
           <h1 className="text-2xl font-bold mb-8 text-center">Criar conta</h1>
           
           <form onSubmit={handleSignUp} className="space-y-4">
@@ -305,7 +317,7 @@ const SignUp = () => {
           </form>
           
           <p className="mt-6 text-center text-sm text-gray-400">
-            Já possui uma conta? <Link to="/login" className="text-purple-400 hover:underline">Faça login</Link>
+            Já possui uma conta? <Link to="/login" className="hover:underline" style={linkColorStyle}>Faça login</Link>
           </p>
         </div>
         

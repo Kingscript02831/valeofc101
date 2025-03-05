@@ -45,21 +45,13 @@ const ResetPassword = () => {
       {/* Reset password form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
         <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
-          {/* Site logo or title added here */}
-          <div className="mb-8">
-            {config?.navbar_logo_type === 'image' && config?.navbar_logo_image ? (
-              <div className="flex justify-center">
-                <img 
-                  src={config.navbar_logo_image} 
-                  alt="Logo" 
-                  className="h-24 w-24 object-cover rounded-full border-2 border-white/20"
-                />
-              </div>
-            ) : (
-              <h2 className="text-3xl font-bold text-center" style={{ color: config?.login_button_color || '#CB5EEE' }}>
-                {config?.navbar_logo_text || 'Vale Notícias'}
-              </h2>
-            )}
+          {/* Fixed logo image */}
+          <div className="mb-8 flex justify-center">
+            <img 
+              src="/logologin.png" 
+              alt="Logo" 
+              className="h-24 w-auto object-contain"
+            />
           </div>
           
           <h1 className="text-2xl font-bold mb-8 text-center">Recuperar Senha</h1>
