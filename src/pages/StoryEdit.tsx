@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
@@ -18,7 +18,7 @@ interface StoryData {
   media_type: "image" | "video" | "text";
   created_at: string;
   expires_at: string;
-  link_url?: string;
+  link_url?: string | null;
 }
 
 const StoryEdit = () => {
@@ -47,25 +47,23 @@ const StoryEdit = () => {
   });
 
   // Initialize form with existing data when story data is loaded
-  useState(() => {
+  useEffect(() => {
     if (story && story.link_url) {
       setLinkUrl(story.link_url);
     }
-  });
+  }, [story]);
 
   // Update story mutation
   const updateStoryMutation = useMutation({
     mutationFn: async () => {
       if (!id) throw new Error("ID da história não encontrado");
 
-      // Fields to update
-      const updates = {
-        link_url: linkUrl || null
-      };
-
+      // Fields to update - make sure this matches the database schema
       const { data, error } = await supabase
         .from("stories")
-        .update(updates)
+        .update({
+          link_url: linkUrl || null
+        })
         .eq("id", id)
         .select();
 
