@@ -39,6 +39,23 @@ export interface Profile {
   created_at?: string | null;
 }
 
+export interface Story {
+  id: string;
+  user_id: string;
+  media_url: string;
+  media_type: string;
+  created_at: string;
+  expires_at: string;
+  link_url?: string | null;
+}
+
+export interface StoryView {
+  id: string;
+  story_id: string;
+  viewer_id: string;
+  viewed_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -180,15 +197,7 @@ export interface Database {
         }
       }
       stories: {
-        Row: {
-          id: string;
-          user_id: string;
-          media_url: string;
-          media_type: string;
-          created_at: string;
-          expires_at: string;
-          link_url?: string | null;
-        };
+        Row: Story;
         Insert: {
           id?: string;
           user_id: string;
@@ -217,12 +226,7 @@ export interface Database {
         ];
       };
       story_views: {
-        Row: {
-          id: string;
-          story_id: string;
-          viewer_id: string;
-          viewed_at: string;
-        };
+        Row: StoryView;
         Insert: {
           id?: string;
           story_id: string;
