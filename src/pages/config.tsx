@@ -643,24 +643,6 @@ const Admin = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="login_card_background_color">Cor de Fundo do Card</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="login_card_background_color"
-                      type="color"
-                      value={config.login_card_background_color || "#0F0F10"}
-                      onChange={(e) => setConfig({ ...config, login_card_background_color: e.target.value })}
-                      className="w-20"
-                    />
-                    <Input
-                      type="text"
-                      value={config.login_card_background_color || "#0F0F10"}
-                      onChange={(e) => setConfig({ ...config, login_card_background_color: e.target.value })}
-                    />
-                  </div>
-                </div>
-                
-                <div>
                   <Label htmlFor="login_button_color">Cor do Botão</Label>
                   <div className="flex gap-2">
                     <Input
@@ -737,7 +719,7 @@ const Admin = () => {
                   <Input
                     id="login_quote_author_title"
                     type="text"
-                    value={config.login_quote_author_title || "Cientista da computa��ão e especialista em realidade virtual."}
+                    value={config.login_quote_author_title || "Cientista da computação e especialista em realidade virtual."}
                     onChange={(e) => setConfig({ ...config, login_quote_author_title: e.target.value })}
                     placeholder="Descrição ou título do autor"
                   />

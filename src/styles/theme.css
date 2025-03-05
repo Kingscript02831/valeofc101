@@ -1,3 +1,4 @@
+
 @layer base {
   :root {
     --background: 0 0% 98%;
@@ -54,7 +55,7 @@
   }
 
   .auth-mobile-background {
-    @apply fixed inset-0 z-0 md:hidden;
+    @apply fixed inset-0 z-0;
   }
 
   .auth-mobile-background img {
@@ -65,8 +66,8 @@
     @apply absolute inset-0 bg-black/60;
   }
 
-  .auth-card {
-    @apply relative z-10 w-full max-w-md bg-black rounded-2xl p-8;
+  .auth-form-container {
+    @apply relative z-10 w-full max-w-md;
   }
 
   .auth-label {
@@ -74,7 +75,7 @@
   }
 
   .auth-input {
-    @apply bg-black border-gray-700 text-white placeholder:text-gray-500;
+    @apply bg-transparent border-gray-700 text-white placeholder:text-gray-500;
   }
 
   .auth-link {
