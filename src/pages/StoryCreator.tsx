@@ -1,289 +1,339 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { X, Camera, Trash2, Edit, Check, Square, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
-import { X, Upload, Type, Save } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
 import { supabase } from "../integrations/supabase/client";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { transformDropboxUrl } from "../utils/mediaUtils";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface GalleryItem {
+  id: string;
+  type: "image" | "video" | "text";
+  url: string;
+  created_at: string;
+  selected?: boolean;
+}
 
 const StoryCreator = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   
-  const [mediaType, setMediaType] = useState<"image" | "video" | "text" | null>(null);
-  const [mediaUrl, setMediaUrl] = useState<string>("");
-  const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
-  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [textContent, setTextContent] = useState<{
-    text: string;
-    bgcolor: string;
-    color: string;
-    fontSize: string;
-  }>({
-    text: "",
-    bgcolor: "#000000",
-    color: "#FFFFFF",
-    fontSize: "24px"
-  });
+  useEffect(() => {
+    fetchUserMedia();
+  }, []);
   
-  // Create story mutation
-  const createStoryMutation = useMutation({
-    mutationFn: async () => {
-      // Check user authentication first
+  const fetchUserMedia = async () => {
+    setIsLoading(true);
+    try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      // Prepare story data based on media type
-      let finalMediaUrl = mediaUrl;
-      
-      if (mediaType === "text") {
-        // For text stories, store the content as JSON
-        finalMediaUrl = JSON.stringify(textContent);
-      } else if (mediaType === "image" || mediaType === "video") {
-        // Transform Dropbox URLs for direct embedding if needed
-        finalMediaUrl = transformDropboxUrl(mediaUrl);
+      if (!user) {
+        navigate("/login");
+        return;
       }
-
-      // Calculate expiry date (24 hours from now)
-      const expiryDate = new Date();
-      expiryDate.setHours(expiryDate.getHours() + 24);
       
-      // Insert the story
       const { data, error } = await supabase
         .from("stories")
-        .insert({
-          user_id: user.id,
-          media_type: mediaType,
-          media_url: finalMediaUrl,
-          expires_at: expiryDate.toISOString()
-        })
-        .select();
-
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+        
       if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myStories"] });
-      queryClient.invalidateQueries({ queryKey: ["userStories"] });
-      toast.success("Story criado com sucesso!");
-      navigate("/story/manage");
-    },
-    onError: (error) => {
-      console.error("Erro ao criar story:", error);
-      toast.error("Erro ao criar o story. Verifique sua conexão.");
+      
+      // Convert the data to match the GalleryItem interface
+      const mappedData = (data || []).map(item => ({
+        id: item.id,
+        type: item.media_type as "image" | "video" | "text",
+        url: item.media_url,
+        created_at: item.created_at,
+        selected: false
+      }));
+      
+      setGalleryItems(mappedData);
+    } catch (error) {
+      console.error("Error fetching media:", error);
+      toast.error("Erro ao carregar sua galeria");
+    } finally {
+      setIsLoading(false);
     }
-  });
-
-  const handleMediaUpload = (url: string) => {
-    setMediaUrl(url);
-    setPreviewUrl(url);
-    setIsUrlDialogOpen(false);
   };
-
-  const handleTextInput = (text: string) => {
-    setTextContent({
-      ...textContent,
-      text
-    });
-    setIsTextDialogOpen(false);
+  
+  const handleDeleteMedia = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este item?")) {
+      try {
+        const { error } = await supabase
+          .from("stories")
+          .delete()
+          .eq("id", id);
+          
+        if (error) throw error;
+        
+        setGalleryItems(prev => prev.filter(item => item.id !== id));
+        toast.success("Item excluído com sucesso");
+      } catch (error) {
+        console.error("Error deleting media:", error);
+        toast.error("Erro ao excluir item");
+      }
+    }
   };
-
-  const handlePublish = () => {
-    if (!mediaType) {
-      toast.error("Selecione um tipo de mídia primeiro");
+  
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) {
+      toast.error("Nenhum item selecionado");
       return;
     }
-
-    if (mediaType === "text" && !textContent.text) {
-      setIsTextDialogOpen(true);
-      return;
+    
+    if (confirm(`Tem certeza que deseja excluir ${selectedItems.length} item(s) selecionado(s)?`)) {
+      try {
+        // Delete each selected item
+        for (const id of selectedItems) {
+          const { error } = await supabase
+            .from("stories")
+            .delete()
+            .eq("id", id);
+            
+          if (error) throw error;
+        }
+        
+        // Update the gallery items
+        setGalleryItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
+        setSelectedItems([]);
+        setIsSelectionMode(false);
+        toast.success(`${selectedItems.length} item(s) excluído(s) com sucesso`);
+      } catch (error) {
+        console.error("Error deleting media:", error);
+        toast.error("Erro ao excluir itens");
+      }
     }
-
-    if ((mediaType === "image" || mediaType === "video") && !mediaUrl) {
-      setIsUrlDialogOpen(true);
-      return;
-    }
-
-    createStoryMutation.mutate();
   };
-
-  const renderMediaPreview = () => {
-    if (!mediaType) return null;
-
-    if (mediaType === "text") {
+  
+  const handleEditMedia = (item: GalleryItem) => {
+    navigate(`/story/edit/${item.id}`);
+  };
+  
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      setSelectedItems([]);
+    }
+  };
+  
+  const toggleItemSelection = (id: string) => {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(prev => prev.filter(itemId => itemId !== id));
+    } else {
+      setSelectedItems(prev => [...prev, id]);
+    }
+  };
+  
+  // Function to render text content from JSON
+  const renderTextContent = (jsonString: string) => {
+    try {
+      const textData = JSON.parse(jsonString);
       return (
-        <div 
-          className="w-full h-full flex items-center justify-center p-4 overflow-hidden"
-          style={{ 
-            backgroundColor: textContent.bgcolor,
-            color: textContent.color,
-            fontSize: textContent.fontSize
-          }}
-          onClick={() => setIsTextDialogOpen(true)}
-        >
-          {textContent.text ? (
-            <p className="text-center break-words">{textContent.text}</p>
+        <span style={{ 
+          color: textData.color || '#FFFFFF',
+          fontSize: '12px'
+        }}>
+          {textData.text}
+        </span>
+      );
+    } catch (e) {
+      return <span>Texto</span>;
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <div className="sticky top-0 z-50 flex items-center justify-between p-4 bg-black">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/story/manage")} className="text-white">
+          <X className="h-8 w-8" />
+        </Button>
+        <h1 className="text-xl font-semibold">Criar story</h1>
+        <div className="w-8" />
+      </div>
+
+      {/* Content - Story Creation Options */}
+      <div className="p-4">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Image Story Option - Changed Music icon to Camera */}
+          <div 
+            className="cursor-pointer rounded-xl overflow-hidden"
+            onClick={() => setIsImageDialogOpen(true)}
+          >
+            <div className="bg-gradient-to-br from-teal-400 to-blue-400 p-6 flex flex-col items-center justify-center aspect-square">
+              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                <Camera className="h-8 w-8 text-gray-800" />
+              </div>
+              <span className="text-white text-xl font-semibold">Imagem</span>
+            </div>
+          </div>
+          
+          {/* Video Story Option */}
+          <div 
+            className="cursor-pointer rounded-xl overflow-hidden"
+            onClick={() => setIsVideoDialogOpen(true)}
+          >
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 flex flex-col items-center justify-center aspect-square">
+              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                <Camera className="h-8 w-8 text-gray-800" />
+              </div>
+              <span className="text-white text-xl font-semibold">Vídeo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Gallery Section */}
+      <div className="mt-8 border-t border-gray-800 pt-4">
+        <div className="px-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Galeria</h2>
+          <div className="flex gap-2">
+            {isSelectionMode && selectedItems.length > 0 && (
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleDeleteSelected}
+                className="flex items-center gap-1"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir ({selectedItems.length})
+              </Button>
+            )}
+            <Button 
+              variant={isSelectionMode ? "secondary" : "outline"} 
+              size="sm"
+              onClick={toggleSelectionMode}
+              className={`border-gray-600 ${isSelectionMode ? 'bg-blue-600 text-white' : 'text-white'}`}
+            >
+              {isSelectionMode ? (
+                <>
+                  <Check className="h-4 w-4 mr-1" />
+                  Concluir
+                </>
+              ) : (
+                "Selecionar vários"
+              )}
+            </Button>
+          </div>
+        </div>
+        
+        {/* Gallery Grid - Changed to 2 columns */}
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-gray-400">Carregando sua galeria...</p>
+            </div>
+          ) : galleryItems.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-400">Nenhum item na galeria</p>
+            </div>
           ) : (
-            <p className="text-center opacity-70">Clique para adicionar texto</p>
+            <div className="grid grid-cols-2 gap-0.5">
+              {galleryItems.map((item) => (
+                <div key={item.id} className="relative aspect-square bg-gray-800">
+                  {isSelectionMode && (
+                    <div 
+                      className="absolute top-2 left-2 z-10" 
+                      onClick={() => toggleItemSelection(item.id)}
+                    >
+                      {selectedItems.includes(item.id) ? (
+                        <div className="bg-blue-500 rounded h-6 w-6 flex items-center justify-center">
+                          <Check className="h-4 w-4 text-white" />
+                        </div>
+                      ) : (
+                        <div className="bg-black bg-opacity-50 border border-white rounded h-6 w-6"></div>
+                      )}
+                    </div>
+                  )}
+                
+                  {item.type === 'text' ? (
+                    <div 
+                      className="h-full w-full flex items-center justify-center bg-gray-900 text-white p-2 text-center overflow-hidden"
+                      onClick={isSelectionMode ? () => toggleItemSelection(item.id) : undefined}
+                    >
+                      {renderTextContent(item.url)}
+                    </div>
+                  ) : item.type === 'video' ? (
+                    <video 
+                      src={transformDropboxUrl(item.url)}
+                      className="object-cover w-full h-full"
+                      onClick={isSelectionMode ? () => toggleItemSelection(item.id) : undefined}
+                    />
+                  ) : (
+                    <img 
+                      src={transformDropboxUrl(item.url)} 
+                      alt="Gallery item" 
+                      className="object-cover w-full h-full"
+                      onClick={isSelectionMode ? () => toggleItemSelection(item.id) : undefined}
+                    />
+                  )}
+                  
+                  {/* Control overlay - Hidden in selection mode */}
+                  {!isSelectionMode && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="rounded-full h-9 w-9 bg-white/20 hover:bg-white/40 transition-colors"
+                        onClick={() => handleEditMedia(item)}
+                      >
+                        <Edit className="h-4 w-4 text-white" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="rounded-full h-9 w-9 bg-white/20 hover:bg-red-500/80 transition-colors"
+                        onClick={() => handleDeleteMedia(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-white" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Video duration indicator */}
+                  {item.type === 'video' && !isSelectionMode && (
+                    <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-0.5 rounded text-xs">
+                      1:00
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      );
-    }
-
-    if (!previewUrl) {
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4" onClick={() => setIsUrlDialogOpen(true)}>
-          <Upload className="h-8 w-8 text-gray-400" />
-          <p className="text-center text-gray-500">Clique para adicionar {mediaType === "image" ? "imagem" : "vídeo"}</p>
-        </div>
-      );
-    }
-
-    return mediaType === "video" ? (
-      <video 
-        src={previewUrl} 
-        className="w-full h-full object-contain"
-        controls
-      />
-    ) : (
-      <img 
-        src={previewUrl} 
-        alt="Story preview" 
-        className="w-full h-full object-contain"
-      />
-    );
-  };
-
-  // Function to exit the app
-  const exitApp = () => {
-    window.location.href = 'https://valeofc.glideapp.io/';
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background pt-14 pb-20">
-      {/* Cabeçalho fixo */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white/90 dark:bg-black/90 backdrop-blur">
-        <Button variant="ghost" size="icon" onClick={exitApp}>
-          <X className="h-6 w-6" />
-        </Button>
-        <h1 className="text-lg font-semibold">Criar Story</h1>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handlePublish}
-          disabled={createStoryMutation.isPending}
-          className="text-blue-500"
-        >
-          <Save className="h-6 w-6" />
-        </Button>
       </div>
-
-      <div className="container max-w-md mx-auto p-4">
-        {/* Área de seleção de mídia */}
-        <Card className="overflow-hidden bg-white dark:bg-card">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <Button
-                variant={mediaType === "image" ? "default" : "outline"}
-                className="w-full"
-                onClick={() => {
-                  setMediaType("image");
-                  setMediaUrl("");
-                  setPreviewUrl("");
-                }}
-              >
-                Imagem
-              </Button>
-              <Button
-                variant={mediaType === "video" ? "default" : "outline"}
-                className="w-full"
-                onClick={() => {
-                  setMediaType("video");
-                  setMediaUrl("");
-                  setPreviewUrl("");
-                }}
-              >
-                Vídeo
-              </Button>
-              <Button
-                variant={mediaType === "text" ? "default" : "outline"}
-                className="w-full"
-                onClick={() => {
-                  setMediaType("text");
-                  setTextContent({
-                    text: "",
-                    bgcolor: "#000000",
-                    color: "#FFFFFF",
-                    fontSize: "24px"
-                  });
-                }}
-              >
-                Texto
-              </Button>
-            </div>
-
-            {/* Preview da mídia */}
-            <div className="aspect-[9/16] w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-4">
-              {renderMediaPreview()}
-            </div>
-
-            {/* Botões de ação */}
-            <div className="flex justify-between">
-              {mediaType === "text" ? (
-                <Button 
-                  onClick={() => setIsTextDialogOpen(true)}
-                  className="w-full"
-                  disabled={createStoryMutation.isPending}
-                >
-                  <Type className="h-4 w-4 mr-2" />
-                  Editar Texto
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => setIsUrlDialogOpen(true)}
-                  className="w-full"
-                  disabled={!mediaType || createStoryMutation.isPending}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {mediaType === "image" ? "Adicionar Imagem" : mediaType === "video" ? "Adicionar Vídeo" : "Adicionar Mídia"}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Botão de publicar */}
-        <Button
-          className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
-          onClick={handlePublish}
-          disabled={createStoryMutation.isPending}
-        >
-          {createStoryMutation.isPending ? "Publicando..." : "Publicar Story"}
-        </Button>
-      </div>
-
-      {/* Dialogs */}
+      
+      {/* Dialog for adding image */}
       <PhotoUrlDialog
-        isOpen={isUrlDialogOpen}
-        onClose={() => setIsUrlDialogOpen(false)}
-        onConfirm={handleMediaUpload}
-        title={mediaType === "image" ? "Adicionar URL da imagem" : "Adicionar URL do vídeo"}
-        placeholder={mediaType === "image" ? "Cole a URL da imagem aqui" : "Cole a URL do vídeo aqui"}
-        textInputOnly={false}
+        isOpen={isImageDialogOpen}
+        onClose={() => setIsImageDialogOpen(false)}
+        onConfirm={(url) => {
+          const transformedUrl = transformDropboxUrl(url);
+          navigate("/story/new", { state: { type: "image", url: transformedUrl } });
+        }}
+        title="Adicionar Imagem"
       />
-
+      
+      {/* Dialog for adding video */}
       <PhotoUrlDialog
-        isOpen={isTextDialogOpen}
-        onClose={() => setIsTextDialogOpen(false)}
-        onConfirm={handleTextInput}
-        title="Adicionar texto para o story"
-        placeholder="Digite o texto do seu story aqui..."
-        textInputOnly={true}
+        isOpen={isVideoDialogOpen}
+        onClose={() => setIsVideoDialogOpen(false)}
+        onConfirm={(url) => {
+          const transformedUrl = transformDropboxUrl(url);
+          navigate("/story/new", { state: { type: "video", url: transformedUrl } });
+        }}
+        title="Adicionar Vídeo"
       />
     </div>
   );
