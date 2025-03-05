@@ -30,3 +30,6 @@ export function useSiteConfig() {
     },
   });
 }
+
+// Exportando também o tipo SiteConfig para uso nos outros arquivos
+export type SiteConfig = SiteConfiguration;
