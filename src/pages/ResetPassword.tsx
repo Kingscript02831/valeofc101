@@ -41,55 +41,26 @@ const ResetPassword = () => {
   const linkColorStyle = { color: config?.login_button_color || '#CB5EEE' };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Left side with image and quote */}
-      <div className="relative flex-1 hidden md:flex flex-col justify-between bg-gradient-to-r from-purple-800 to-purple-900 overflow-hidden">
-        {config?.login_background_image ? (
-          <div className="absolute inset-0 z-0">
-            <img
-              src={config.login_background_image}
-              alt="Reset Password"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
-          </div>
-        ) : (
-          <div className="absolute inset-0 z-0">
-            <img
-              src="/lovable-uploads/587a2669-ca00-4bd7-a223-008d7d9ace86.png"
-              alt="Reset Password"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-800/40 to-purple-900/40"></div>
-          </div>
-        )}
-        <div className="relative z-10 flex flex-col justify-between h-full p-12">
-          <div></div>
-          <div className="bg-black/30 p-6 rounded-2xl backdrop-blur-sm">
-            <p className="text-white text-lg font-medium mb-4">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
-            <p className="text-white font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
-            <p className="text-white/70 text-sm">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right side with reset password form */}
+    <div className="flex min-h-screen bg-black">
+      {/* Reset password form */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-black text-white">
         <div className="w-full max-w-md bg-[#0F0F10] rounded-2xl p-8" style={{ backgroundColor: config?.login_card_background_color || '#0F0F10' }}>
           {/* Site logo or title added here */}
-          {config?.navbar_logo_type === 'image' && config?.navbar_logo_image ? (
-            <div className="flex justify-center mb-6">
-              <img 
-                src={config.navbar_logo_image} 
-                alt="Logo" 
-                className="h-12 w-auto object-contain"
-              />
-            </div>
-          ) : (
-            <h2 className="text-xl font-bold text-center mb-6" style={{ color: config?.login_button_color || '#CB5EEE' }}>
-              {config?.navbar_logo_text || 'Vale Notícias'}
-            </h2>
-          )}
+          <div className="mb-8">
+            {config?.navbar_logo_type === 'image' && config?.navbar_logo_image ? (
+              <div className="flex justify-center">
+                <img 
+                  src={config.navbar_logo_image} 
+                  alt="Logo" 
+                  className="h-24 w-24 object-cover rounded-full border-2 border-white/20"
+                />
+              </div>
+            ) : (
+              <h2 className="text-3xl font-bold text-center" style={{ color: config?.login_button_color || '#CB5EEE' }}>
+                {config?.navbar_logo_text || 'Vale Notícias'}
+              </h2>
+            )}
+          </div>
           
           <h1 className="text-2xl font-bold mb-8 text-center">Recuperar Senha</h1>
           
@@ -112,40 +83,56 @@ const ResetPassword = () => {
               >
                 <Link to="/login">Voltar para o Login</Link>
               </Button>
+              
+              {/* Quote section added for the success state */}
+              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm">
+                <p className="text-white/90 text-sm italic mb-2">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
+                <p className="text-white/90 text-sm font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
+                <p className="text-white/70 text-xs">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
+              </div>
             </div>
           ) : (
-            <form onSubmit={handleResetPassword} className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm">E-mail</label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Digite seu email cadastrado"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="bg-black border-gray-700 text-white placeholder:text-gray-500"
-                />
-              </div>
+            <>
+              <form onSubmit={handleResetPassword} className="space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-sm">E-mail</label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Digite seu email cadastrado"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="bg-black border-b-[1px] border-t-0 border-l-0 border-r-0 border-gray-700 text-white placeholder:text-gray-500 rounded-none focus:ring-0"
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full py-6 text-center rounded-lg font-medium"
+                  style={{ 
+                    backgroundColor: config?.login_button_color || '#CB5EEE', 
+                    color: config?.login_button_text_color || '#FFFFFF'
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "Enviando..." : "Enviar Link de Recuperação"}
+                </Button>
+                
+                <div className="text-center">
+                  <Link to="/login" className="hover:underline text-sm" style={linkColorStyle}>
+                    Voltar para o Login
+                  </Link>
+                </div>
+              </form>
               
-              <Button 
-                type="submit" 
-                className="w-full py-6 text-center rounded-lg font-medium"
-                style={{ 
-                  backgroundColor: config?.login_button_color || '#CB5EEE', 
-                  color: config?.login_button_text_color || '#FFFFFF'
-                }}
-                disabled={loading}
-              >
-                {loading ? "Enviando..." : "Enviar Link de Recuperação"}
-              </Button>
-              
-              <div className="text-center">
-                <Link to="/login" className="hover:underline text-sm" style={linkColorStyle}>
-                  Voltar para o Login
-                </Link>
+              {/* Quote section moved below the back to login link */}
+              <div className="mt-10 p-4 rounded-xl bg-black/30 backdrop-blur-sm">
+                <p className="text-white/90 text-sm italic mb-2">{config?.login_quote_text || '"No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."'}</p>
+                <p className="text-white/90 text-sm font-bold">{config?.login_quote_author || 'Jaron Lanier'}</p>
+                <p className="text-white/70 text-xs">{config?.login_quote_author_title || 'Cientista da computação e especialista em realidade virtual.'}</p>
               </div>
-            </form>
+            </>
           )}
         </div>
         
