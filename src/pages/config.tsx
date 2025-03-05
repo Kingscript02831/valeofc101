@@ -618,42 +618,129 @@ const Admin = () => {
 
           <TabsContent value="login" className="bg-white rounded-lg shadow p-6 space-y-6">
             <div>
-              <h2 className="text-xl font-semibold mb-4">Cores dos Textos de Autenticação</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <h2 className="text-xl font-semibold mb-4">Aparência do Login/Registro</h2>
+              
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="login_text_color">Cor do Texto "Conecte-se"</Label>
+                  <Label htmlFor="login_background_image">Imagem de Fundo</Label>
+                  <Input
+                    id="login_background_image"
+                    type="url"
+                    value={config.login_background_image || ""}
+                    onChange={(e) => setConfig({ ...config, login_background_image: e.target.value })}
+                    placeholder="URL da imagem de fundo"
+                    className="mb-2"
+                  />
+                  <p className="text-sm text-gray-500">
+                    {config.login_background_image && (
+                      <img 
+                        src={config.login_background_image} 
+                        alt="Login background preview" 
+                        className="mt-2 h-28 object-cover rounded-lg" 
+                      />
+                    )}
+                  </p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="login_card_background_color">Cor de Fundo do Card</Label>
                   <div className="flex gap-2">
                     <Input
-                      id="login_text_color"
+                      id="login_card_background_color"
                       type="color"
-                      value={config.login_text_color}
-                      onChange={(e) => setConfig({ ...config, login_text_color: e.target.value })}
+                      value={config.login_card_background_color || "#0F0F10"}
+                      onChange={(e) => setConfig({ ...config, login_card_background_color: e.target.value })}
                       className="w-20"
                     />
                     <Input
                       type="text"
-                      value={config.login_text_color}
-                      onChange={(e) => setConfig({ ...config, login_text_color: e.target.value })}
+                      value={config.login_card_background_color || "#0F0F10"}
+                      onChange={(e) => setConfig({ ...config, login_card_background_color: e.target.value })}
                     />
                   </div>
                 </div>
-
+                
                 <div>
-                  <Label htmlFor="signup_text_color">Cor do Texto "Inscreva-se"</Label>
+                  <Label htmlFor="login_button_color">Cor do Botão</Label>
                   <div className="flex gap-2">
                     <Input
-                      id="signup_text_color"
+                      id="login_button_color"
                       type="color"
-                      value={config.signup_text_color}
-                      onChange={(e) => setConfig({ ...config, signup_text_color: e.target.value })}
+                      value={config.login_button_color || "#CB5EEE"}
+                      onChange={(e) => setConfig({ ...config, login_button_color: e.target.value })}
                       className="w-20"
                     />
                     <Input
                       type="text"
-                      value={config.signup_text_color}
-                      onChange={(e) => setConfig({ ...config, signup_text_color: e.target.value })}
+                      value={config.login_button_color || "#CB5EEE"}
+                      onChange={(e) => setConfig({ ...config, login_button_color: e.target.value })}
                     />
                   </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="login_button_text_color">Cor do Texto do Botão</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="login_button_text_color"
+                      type="color"
+                      value={config.login_button_text_color || "#FFFFFF"}
+                      onChange={(e) => setConfig({ ...config, login_button_text_color: e.target.value })}
+                      className="w-20"
+                    />
+                    <Input
+                      type="text"
+                      value={config.login_button_text_color || "#FFFFFF"}
+                      onChange={(e) => setConfig({ ...config, login_button_text_color: e.target.value })}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="login_developer_text">Texto do Desenvolvedor</Label>
+                  <Input
+                    id="login_developer_text"
+                    type="text"
+                    value={config.login_developer_text || "2025 | Desenvolvido por Vinícius Dev"}
+                    onChange={(e) => setConfig({ ...config, login_developer_text: e.target.value })}
+                    placeholder="Texto que aparece no rodapé da página de login"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-4 mt-6">
+                <h3 className="text-lg font-medium">Citação</h3>
+                <div>
+                  <Label htmlFor="login_quote_text">Texto da Citação</Label>
+                  <Textarea
+                    id="login_quote_text"
+                    value={config.login_quote_text || "No futuro, a tecnologia nos permitirá criar realidades alternativas tão convincentes que será difícil distinguir o que é real do que é simulado."}
+                    onChange={(e) => setConfig({ ...config, login_quote_text: e.target.value })}
+                    placeholder="Texto da citação que aparece na imagem de fundo"
+                    rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="login_quote_author">Autor da Citação</Label>
+                  <Input
+                    id="login_quote_author"
+                    type="text"
+                    value={config.login_quote_author || "Jaron Lanier"}
+                    onChange={(e) => setConfig({ ...config, login_quote_author: e.target.value })}
+                    placeholder="Nome do autor da citação"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="login_quote_author_title">Descrição do Autor</Label>
+                  <Input
+                    id="login_quote_author_title"
+                    type="text"
+                    value={config.login_quote_author_title || "Cientista da computa��ão e especialista em realidade virtual."}
+                    onChange={(e) => setConfig({ ...config, login_quote_author_title: e.target.value })}
+                    placeholder="Descrição ou título do autor"
+                  />
                 </div>
               </div>
             </div>

@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -7,279 +6,343 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface SiteConfiguration {
-  id: string;
-  theme_name: string;
-  navbar_logo_type: string;
-  navbar_logo_text: string | null;
-  navbar_logo_image: string | null;
-  navbar_color: string;
-  primary_color: string;
-  secondary_color: string;
-  text_color: string;
-  button_primary_color: string;
-  button_secondary_color: string;
-}
-
-export interface Profile {
-  id: string;
-  updated_at?: string | null;
-  username?: string | null;
-  full_name?: string | null;
-  avatar_url?: string | null;
-  cover_url?: string | null;
-  website?: string | null;
-  email?: string | null;
-  bio?: string | null;
-  status?: string | null;
-  city?: string | null;
-  instagram_url?: string | null;
-  relationship_status?: string | null;
-  birth_date?: string | null;
-  created_at?: string | null;
-}
-
 export interface Database {
   public: {
     Tables: {
-      profiles: {
-        Row: Profile;
-        Insert: {
-          id: string;
-          username?: string | null;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          website?: string | null;
-          updated_at?: string | null;
-          created_at?: string | null;
-          city?: string | null;
-          cover_url?: string | null;
-          status?: string | null;
-          birth_date?: string | null;
-          relationship_status?: string | null;
-          instagram_url?: string | null;
-        };
-        Update: {
-          id?: string;
-          username?: string | null;
-          full_name?: string | null;
-          avatar_url?: string | null;
-          website?: string | null;
-          updated_at?: string | null;
-          created_at?: string | null;
-          city?: string | null;
-          cover_url?: string | null;
-          status?: string | null;
-          birth_date?: string | null;
-          relationship_status?: string | null;
-          instagram_url?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey";
-            columns: ["id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      follows: {
-        Row: {
-          id: string;
-          follower_id: string;
-          following_id: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          follower_id: string;
-          following_id: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          follower_id?: string;
-          following_id?: string;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "follows_follower_id_fkey";
-            columns: ["follower_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "follows_following_id_fkey";
-            columns: ["following_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
       site_configuration: {
         Row: {
-          id: string;
+          id: string
+          theme_name: string
+          primary_color: string
+          secondary_color: string
           background_color: string
-          bottom_nav_icon_color: string
+          text_color: string
+          navbar_color: string
+          created_at: string
+          updated_at: string
+          navbar_logo_type: string
+          navbar_logo_text: string | null
+          navbar_logo_image: string | null
+          navbar_social_facebook: string | null
+          navbar_social_instagram: string | null
+          language: string
+          enable_dark_mode: boolean
+          enable_weather: boolean
+          header_alerts: Json[]
+          navigation_links: Json[]
+          font_size: string
+          footer_primary_color: string
+          footer_secondary_color: string
+          footer_text_color: string
+          footer_contact_email: string | null
+          footer_contact_phone: string | null
+          footer_address: string | null
+          footer_address_cep: string | null
+          footer_social_facebook: string | null
+          footer_social_instagram: string | null
+          footer_schedule: string | null
+          footer_copyright_text: string
+          meta_title: string
+          meta_description: string
+          meta_author: string
+          meta_image: string
+          button_primary_color: string
+          button_secondary_color: string
           bottom_nav_primary_color: string
           bottom_nav_secondary_color: string
           bottom_nav_text_color: string
-          button_primary_color: string
-          button_secondary_color: string
-          created_at: string
-          enable_dark_mode: boolean | null
-          enable_weather: boolean | null
-          font_size: string | null
-          footer_address: string | null
-          footer_address_cep: string | null
-          footer_contact_email: string | null
-          footer_contact_phone: string | null
-          footer_copyright_text: string | null
-          footer_primary_color: string
-          footer_schedule: string | null
-          footer_secondary_color: string
-          footer_social_facebook: string | null
-          footer_social_instagram: string | null
-          footer_text_color: string
-          header_alerts: Json | null
-          high_contrast: boolean | null
-          language: string | null
-          location_city: string | null
-          location_country: string | null
+          bottom_nav_icon_color: string
+          high_contrast: boolean
           location_lat: number | null
           location_lng: number | null
+          location_city: string | null
           location_state: string | null
-          meta_author: string | null
-          meta_description: string | null
-          meta_image: string | null
-          meta_title: string | null
-          navbar_color: string
-          navbar_logo_image: string | null
-          navbar_logo_text: string | null
-          navbar_logo_type: string
-          navbar_social_facebook: string | null
-          navbar_social_instagram: string | null
-          navigation_links: Json | null
-          primary_color: string
-          secondary_color: string
-          text_color: string
-          theme_name: string
-          updated_at: string
-          version: number | null
+          location_country: string | null
           weather_api_key: string | null
+          version: number
           login_text_color: string
           signup_text_color: string
-          pwa_name: string | null
-          pwa_short_name: string | null
-          pwa_description: string | null
-          pwa_theme_color: string | null
-          pwa_background_color: string | null
-          pwa_install_message: string | null
+          pwa_name: string
+          pwa_short_name: string
+          pwa_description: string
+          pwa_theme_color: string
+          pwa_background_color: string
+          pwa_install_message: string
           pwa_app_icon: string | null
+          admin_accent_color: string
+          admin_background_color: string
+          admin_card_color: string
+          admin_header_color: string
+          admin_hover_color: string
+          admin_sidebar_color: string
+          admin_text_color: string
+          favorite_heart_color: string
+          buy_button_color: string
+          buy_button_text: string
+          whatsapp_message?: string | null
+          basic_info_update_interval?: number | null
+          login_background_image?: string | null
+          login_card_background_color?: string | null
+          login_button_color?: string | null
+          login_button_text_color?: string | null
+          login_developer_text?: string | null
+          login_quote_text?: string | null
+          login_quote_author?: string | null
+          login_quote_author_title?: string | null
+        }
+        Insert: {
+          id?: string
+          theme_name: string
+          primary_color: string
+          secondary_color: string
+          background_color: string
+          text_color: string
+          navbar_color: string
+          created_at?: string
+          updated_at?: string
+          navbar_logo_type: string
+          navbar_logo_text?: string | null
+          navbar_logo_image?: string | null
+          navbar_social_facebook?: string | null
+          navbar_social_instagram?: string | null
+          language: string
+          enable_dark_mode: boolean
+          enable_weather: boolean
+          header_alerts: Json[]
+          navigation_links: Json[]
+          font_size: string
+          footer_primary_color: string
+          footer_secondary_color: string
+          footer_text_color: string
+          footer_contact_email?: string | null
+          footer_contact_phone?: string | null
+          footer_address?: string | null
+          footer_address_cep?: string | null
+          footer_social_facebook?: string | null
+          footer_social_instagram?: string | null
+          footer_schedule?: string | null
+          footer_copyright_text: string
+          meta_title: string
+          meta_description: string
+          meta_author: string
+          meta_image: string
+          button_primary_color: string
+          button_secondary_color: string
+          bottom_nav_primary_color: string
+          bottom_nav_secondary_color: string
+          bottom_nav_text_color: string
+          bottom_nav_icon_color: string
+          high_contrast: boolean
+          location_lat?: number | null
+          location_lng?: number | null
+          location_city?: string | null
+          location_state?: string | null
+          location_country?: string | null
+          weather_api_key?: string | null
+          version: number
+          login_text_color: string
+          signup_text_color: string
+          pwa_name: string
+          pwa_short_name: string
+          pwa_description: string
+          pwa_theme_color: string
+          pwa_background_color: string
+          pwa_install_message: string
+          pwa_app_icon?: string | null
+          admin_accent_color: string
+          admin_background_color: string
+          admin_card_color: string
+          admin_header_color: string
+          admin_hover_color: string
+          admin_sidebar_color: string
+          admin_text_color: string
+          favorite_heart_color: string
+          buy_button_color: string
+          buy_button_text: string
+          whatsapp_message?: string | null
+          basic_info_update_interval?: number | null
+          login_background_image?: string | null
+          login_card_background_color?: string | null
+          login_button_color?: string | null
+          login_button_text_color?: string | null
+          login_developer_text?: string | null
+          login_quote_text?: string | null
+          login_quote_author?: string | null
+          login_quote_author_title?: string | null
+        }
+        Update: {
+          id?: string
+          theme_name?: string
+          primary_color?: string
+          secondary_color?: string
+          background_color?: string
+          text_color?: string
+          navbar_color?: string
+          created_at?: string
+          updated_at?: string
+          navbar_logo_type?: string
+          navbar_logo_text?: string | null
+          navbar_logo_image?: string | null
+          navbar_social_facebook?: string | null
+          navbar_social_instagram?: string | null
+          language?: string
+          enable_dark_mode?: boolean
+          enable_weather?: boolean
+          header_alerts?: Json[]
+          navigation_links?: Json[]
+          font_size?: string
+          footer_primary_color?: string
+          footer_secondary_color?: string
+          footer_text_color?: string
+          footer_contact_email?: string | null
+          footer_contact_phone?: string | null
+          footer_address?: string | null
+          footer_address_cep?: string | null
+          footer_social_facebook?: string | null
+          footer_social_instagram?: string | null
+          footer_schedule?: string | null
+          footer_copyright_text?: string
+          meta_title?: string
+          meta_description?: string
+          meta_author?: string
+          meta_image?: string
+          button_primary_color?: string
+          button_secondary_color?: string
+          bottom_nav_primary_color?: string
+          bottom_nav_secondary_color?: string
+          bottom_nav_text_color?: string
+          bottom_nav_icon_color?: string
+          high_contrast?: boolean
+          location_lat?: number | null
+          location_lng?: number | null
+          location_city?: string | null
+          location_state?: string | null
+          location_country?: string | null
+          weather_api_key?: string | null
+          version?: number
+          login_text_color?: string
+          signup_text_color?: string
+          pwa_name?: string
+          pwa_short_name?: string
+          pwa_description?: string
+          pwa_theme_color?: string
+          pwa_background_color?: string
+          pwa_install_message?: string
+          pwa_app_icon?: string | null
+          admin_accent_color?: string
+          admin_background_color?: string
+          admin_card_color?: string
+          admin_header_color?: string
+          admin_hover_color?: string
+          admin_sidebar_color?: string
+          admin_text_color?: string
+          favorite_heart_color?: string
+          buy_button_color?: string
+          buy_button_text?: string
+          whatsapp_message?: string | null
+          basic_info_update_interval?: number | null
+          login_background_image?: string | null
+          login_card_background_color?: string | null
+          login_button_color?: string | null
+          login_button_text_color?: string | null
+          login_developer_text?: string | null
+          login_quote_text?: string | null
+          login_quote_author?: string | null
+          login_quote_author_title?: string | null
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          updated_at: string | null
+          username: string | null
+          full_name: string | null
+          avatar_url: string | null
+          website: string | null
+          email: string | null
+        }
+        Insert: {
+          id: string
+          updated_at?: string | null
+          username?: string | null
+          full_name?: string | null
+          avatar_url?: string | null
+          website?: string | null
+          email?: string | null
+        }
+        Update: {
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+          full_name?: string | null
+          avatar_url?: string | null
+          website?: string | null
+          email?: string | null
         }
       }
       stories: {
         Row: {
-          id: string;
-          user_id: string;
-          media_url: string;
-          media_type: string;
-          created_at: string;
-          expires_at: string;
-          link_url?: string | null;
-        };
+          id: string
+          created_at: string
+          user_id: string
+          media_url: string
+          duration: number
+          viewers: string[] | null
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          media_url: string;
-          media_type: string;
-          created_at?: string;
-          expires_at?: string;
-          link_url?: string | null;
-        };
+          id?: string
+          created_at?: string
+          user_id: string
+          media_url: string
+          duration: number
+          viewers?: string[] | null
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          media_url?: string;
-          media_type?: string;
-          created_at?: string;
-          expires_at?: string;
-          link_url?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "stories_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      story_views: {
+          id?: string
+          created_at?: string
+          user_id?: string
+          media_url?: string
+          duration?: number
+          viewers?: string[] | null
+        }
+      }
+      story_comments: {
         Row: {
-          id: string;
-          story_id: string;
-          viewer_id: string;
-          viewed_at: string;
-        };
+          id: string
+          story_id: string
+          user_id: string
+          text: string
+          created_at: string
+        }
         Insert: {
-          id?: string;
-          story_id: string;
-          viewer_id: string;
-          viewed_at?: string;
-        };
+          id?: string
+          story_id: string
+          user_id: string
+          text: string
+          created_at?: string
+        }
         Update: {
-          id?: string;
-          story_id?: string;
-          viewer_id?: string;
-          viewed_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "story_views_story_id_fkey";
-            columns: ["story_id"];
-            referencedRelation: "stories";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "story_views_viewer_id_fkey";
-            columns: ["viewer_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      post_reactions: {
-        Row: {
-          id: string;
-          post_id: string;
-          user_id: string;
-          reaction_type: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          post_id: string;
-          user_id: string;
-          reaction_type: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          post_id?: string;
-          user_id?: string;
-          reaction_type?: string;
-          created_at?: string;
-        };
-      };
-      // Add other tables as needed
-    };
+          id?: string
+          story_id?: string
+          user_id?: string
+          text?: string
+          created_at?: string
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
-      [key: string]: unknown;
-    };
+      [_ in never]: never
+    }
     Enums: {
-      [key: string]: unknown;
-    };
-  };
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
+
+export type SiteConfiguration = Database['public']['Tables']['site_configuration']['Row'];
