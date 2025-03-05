@@ -643,6 +643,24 @@ const Admin = () => {
                 </div>
                 
                 <div>
+                  <Label htmlFor="login_card_background_color">Cor de Fundo do Card</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="login_card_background_color"
+                      type="color"
+                      value={config.login_card_background_color || "#0F0F10"}
+                      onChange={(e) => setConfig({ ...config, login_card_background_color: e.target.value })}
+                      className="w-20"
+                    />
+                    <Input
+                      type="text"
+                      value={config.login_card_background_color || "#0F0F10"}
+                      onChange={(e) => setConfig({ ...config, login_card_background_color: e.target.value })}
+                    />
+                  </div>
+                </div>
+                
+                <div>
                   <Label htmlFor="login_button_color">Cor do Botão</Label>
                   <div className="flex gap-2">
                     <Input
@@ -676,6 +694,38 @@ const Admin = () => {
                       onChange={(e) => setConfig({ ...config, login_button_text_color: e.target.value })}
                     />
                   </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="login_label_color">Cor dos Rótulos</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="login_label_color"
+                      type="color"
+                      value={config.login_label_color || "#CB5EEE"}
+                      onChange={(e) => setConfig({ ...config, login_label_color: e.target.value })}
+                      className="w-20"
+                    />
+                    <Input
+                      type="text"
+                      value={config.login_label_color || "#CB5EEE"}
+                      onChange={(e) => setConfig({ ...config, login_label_color: e.target.value })}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="login_label_muted_color">Cor dos Textos Secundários</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="login_label_muted_color"
+                      type="text"
+                      value={config.login_label_muted_color || "rgba(255, 255, 255, 0.6)"}
+                      onChange={(e) => setConfig({ ...config, login_label_muted_color: e.target.value })}
+                    />
+                    <span className="w-8 h-8 rounded" style={{ backgroundColor: config.login_label_muted_color || "rgba(255, 255, 255, 0.6)" }}></span>
+                  </div>
+                  <p className="text-xs text-gray-500">Use formato rgba(255,255,255,0.6) para cores semi-transparentes</p>
                 </div>
                 
                 <div>
@@ -719,7 +769,7 @@ const Admin = () => {
                   <Input
                     id="login_quote_author_title"
                     type="text"
-                    value={config.login_quote_author_title || "Cientista da computação e especialista em realidade virtual."}
+                    value={config.login_quote_author_title || "Cientista da computa��ão e especialista em realidade virtual."}
                     onChange={(e) => setConfig({ ...config, login_quote_author_title: e.target.value })}
                     placeholder="Descrição ou título do autor"
                   />
