@@ -59,6 +59,12 @@ export default {
           light: "#555555",
           dark: "#ffffff",
         },
+        // New action colors for better UI
+        action: {
+          edit: "#3b82f6",
+          delete: "#ef4444",
+          select: "#10b981",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

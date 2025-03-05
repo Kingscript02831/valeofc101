@@ -3,17 +3,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Camera, Trash2, Edit } from "lucide-react";
+import { X, Camera, Trash2, Edit, Check, Square, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../integrations/supabase/client";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { transformDropboxUrl } from "../utils/mediaUtils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface GalleryItem {
   id: string;
   type: "image" | "video" | "text";
   url: string;
   created_at: string;
+  selected?: boolean;
 }
 
 const StoryCreator = () => {
@@ -22,6 +24,8 @@ const StoryCreator = () => {
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   
   useEffect(() => {
     fetchUserMedia();
@@ -49,7 +53,8 @@ const StoryCreator = () => {
         id: item.id,
         type: item.media_type as "image" | "video" | "text",
         url: item.media_url,
-        created_at: item.created_at
+        created_at: item.created_at,
+        selected: false
       }));
       
       setGalleryItems(mappedData);
@@ -80,8 +85,53 @@ const StoryCreator = () => {
     }
   };
   
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) {
+      toast.error("Nenhum item selecionado");
+      return;
+    }
+    
+    if (confirm(`Tem certeza que deseja excluir ${selectedItems.length} item(s) selecionado(s)?`)) {
+      try {
+        // Delete each selected item
+        for (const id of selectedItems) {
+          const { error } = await supabase
+            .from("stories")
+            .delete()
+            .eq("id", id);
+            
+          if (error) throw error;
+        }
+        
+        // Update the gallery items
+        setGalleryItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
+        setSelectedItems([]);
+        setIsSelectionMode(false);
+        toast.success(`${selectedItems.length} item(s) excluído(s) com sucesso`);
+      } catch (error) {
+        console.error("Error deleting media:", error);
+        toast.error("Erro ao excluir itens");
+      }
+    }
+  };
+  
   const handleEditMedia = (item: GalleryItem) => {
     navigate(`/story/edit/${item.id}`);
+  };
+  
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      setSelectedItems([]);
+    }
+  };
+  
+  const toggleItemSelection = (id: string) => {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(prev => prev.filter(itemId => itemId !== id));
+    } else {
+      setSelectedItems(prev => [...prev, id]);
+    }
   };
   
   // Function to render text content from JSON
@@ -147,9 +197,34 @@ const StoryCreator = () => {
       <div className="mt-8 border-t border-gray-800 pt-4">
         <div className="px-4 flex justify-between items-center">
           <h2 className="text-xl font-semibold">Galeria</h2>
-          <Button variant="outline" className="border-gray-600 text-black dark:text-white">
-            Selecionar vários
-          </Button>
+          <div className="flex gap-2">
+            {isSelectionMode && selectedItems.length > 0 && (
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleDeleteSelected}
+                className="flex items-center gap-1"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir ({selectedItems.length})
+              </Button>
+            )}
+            <Button 
+              variant={isSelectionMode ? "secondary" : "outline"} 
+              size="sm"
+              onClick={toggleSelectionMode}
+              className={`border-gray-600 ${isSelectionMode ? 'bg-blue-600 text-white' : 'text-white'}`}
+            >
+              {isSelectionMode ? (
+                <>
+                  <Check className="h-4 w-4 mr-1" />
+                  Concluir
+                </>
+              ) : (
+                "Selecionar vários"
+              )}
+            </Button>
+          </div>
         </div>
         
         {/* Gallery Grid - Changed to 2 columns */}
@@ -167,45 +242,67 @@ const StoryCreator = () => {
             <div className="grid grid-cols-2 gap-0.5">
               {galleryItems.map((item) => (
                 <div key={item.id} className="relative aspect-square bg-gray-800">
+                  {isSelectionMode && (
+                    <div 
+                      className="absolute top-2 left-2 z-10" 
+                      onClick={() => toggleItemSelection(item.id)}
+                    >
+                      {selectedItems.includes(item.id) ? (
+                        <div className="bg-blue-500 rounded h-6 w-6 flex items-center justify-center">
+                          <Check className="h-4 w-4 text-white" />
+                        </div>
+                      ) : (
+                        <div className="bg-black bg-opacity-50 border border-white rounded h-6 w-6"></div>
+                      )}
+                    </div>
+                  )}
+                
                   {item.type === 'text' ? (
-                    <div className="h-full w-full flex items-center justify-center bg-gray-900 text-white p-2 text-center overflow-hidden">
+                    <div 
+                      className="h-full w-full flex items-center justify-center bg-gray-900 text-white p-2 text-center overflow-hidden"
+                      onClick={isSelectionMode ? () => toggleItemSelection(item.id) : undefined}
+                    >
                       {renderTextContent(item.url)}
                     </div>
                   ) : item.type === 'video' ? (
                     <video 
                       src={transformDropboxUrl(item.url)}
                       className="object-cover w-full h-full"
+                      onClick={isSelectionMode ? () => toggleItemSelection(item.id) : undefined}
                     />
                   ) : (
                     <img 
                       src={transformDropboxUrl(item.url)} 
                       alt="Gallery item" 
                       className="object-cover w-full h-full"
+                      onClick={isSelectionMode ? () => toggleItemSelection(item.id) : undefined}
                     />
                   )}
                   
-                  {/* Control overlay */}
-                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-8 w-8 text-white hover:bg-white/20"
-                      onClick={() => handleEditMedia(item)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-8 w-8 text-red-500 hover:bg-white/20"
-                      onClick={() => handleDeleteMedia(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {/* Control overlay - Hidden in selection mode */}
+                  {!isSelectionMode && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="rounded-full h-9 w-9 bg-white/20 hover:bg-white/40 transition-colors"
+                        onClick={() => handleEditMedia(item)}
+                      >
+                        <Edit className="h-4 w-4 text-white" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="rounded-full h-9 w-9 bg-white/20 hover:bg-red-500/80 transition-colors"
+                        onClick={() => handleDeleteMedia(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-white" />
+                      </Button>
+                    </div>
+                  )}
                   
                   {/* Video duration indicator */}
-                  {item.type === 'video' && (
+                  {item.type === 'video' && !isSelectionMode && (
                     <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 px-2 py-0.5 rounded text-xs">
                       1:00
                     </div>
