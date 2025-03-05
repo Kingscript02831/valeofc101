@@ -211,7 +211,29 @@
   animation: pulse-border 2s infinite;
 }
 
-/* Restante dos estilos existentes */
+/* Story UI solid black styles */
+.story-viewer-container .comments-section {
+  @apply bg-black border-none;
+}
+
+.story-viewer-container .comment-input {
+  @apply bg-black text-white border-gray-800;
+}
+
+.story-view-controls {
+  @apply bg-black text-white;
+}
+
+.story-comment-input-container {
+  @apply bg-black border-t border-gray-800;
+}
+
+/* Ensure all icons in story viewer are white */
+.story-viewer-container svg,
+.story-viewer-container button svg {
+  @apply text-white;
+}
+
 .post-card {
   @apply mb-3;
 }
