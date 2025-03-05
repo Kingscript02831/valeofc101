@@ -5,7 +5,7 @@ export const translateAuthError = (error: string): string => {
   }
   
   if (error.includes("Invalid login credentials")) {
-    return "Credenciais inválidas. Verifique seu email/username e senha.";
+    return "Credenciais inválidas. Verifique seu email e senha.";
   }
   
   if (error.includes("Email already registered")) {
@@ -22,10 +22,6 @@ export const translateAuthError = (error: string): string => {
   
   if (error.includes("Rate limit")) {
     return "Muitas tentativas. Tente novamente mais tarde.";
-  }
-  
-  if (error.includes("Usuário não encontrado")) {
-    return "Nome de usuário não encontrado. Verifique se digitou corretamente.";
   }
   
   return `Erro: ${error}`;
