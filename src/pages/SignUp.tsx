@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -20,6 +21,7 @@ const SignUp = () => {
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [phone, setPhone] = useState("");
   const [locationId, setLocationId] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -28,6 +30,7 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [formErrors, setFormErrors] = useState({
     fullName: false,
     username: false,
@@ -90,12 +93,52 @@ const SignUp = () => {
     }
   };
   
+  const checkEmailAvailability = async (email: string) => {
+    if (!email) return;
+    
+    try {
+      setCheckingEmail(true);
+      // We need to check if the email exists in auth.users, but we can't do that directly
+      // Instead, we'll attempt a password reset to check if the email exists
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/update-password',
+      });
+      
+      // If no error, the email exists
+      // If error is "Email not found", the email doesn't exist
+      if (error && error.message.includes("Email not found")) {
+        return true; // Email is available
+      }
+      
+      // If we reached here, the email exists (or there was an unknown error)
+      return false; // Email is not available
+    } catch (error) {
+      console.error("Error checking email:", error);
+      return true; // Assume it's available on error
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+  
   const debouncedUsernameCheck = debounce(async (username: string) => {
     if (username && !usernameError) {
       const isAvailable = await checkUsernameAvailability(username);
       if (!isAvailable) {
         setUsernameError("Este nome de usuário já está em uso.");
         setFormErrors(prev => ({...prev, username: true}));
+      }
+    }
+  }, 500);
+
+  const debouncedEmailCheck = debounce(async (email: string) => {
+    if (email && email.includes('@') && email.includes('.')) {
+      const isAvailable = await checkEmailAvailability(email);
+      if (!isAvailable) {
+        setEmailError("Este e-mail já está em uso.");
+        setFormErrors(prev => ({...prev, email: true}));
+      } else {
+        setEmailError("");
+        setFormErrors(prev => ({...prev, email: false}));
       }
     }
   }, 500);
@@ -118,11 +161,22 @@ const SignUp = () => {
     }
   };
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    setEmailError("");
+    setFormErrors(prev => ({...prev, email: false}));
+    
+    if (newEmail && newEmail.includes('@') && newEmail.includes('.')) {
+      debouncedEmailCheck(newEmail);
+    }
+  };
+
   const validateForm = () => {
     const errors = {
       fullName: !fullName.trim(),
       username: !username.trim() || !!usernameError,
-      email: !email.trim(),
+      email: !email.trim() || !!emailError,
       phone: !phone.trim(),
       locationId: !locationId.trim(),
       birthDate: !birthDate.trim(),
@@ -158,6 +212,15 @@ const SignUp = () => {
         setFormErrors(prev => ({...prev, username: true}));
         return;
       }
+    }
+    
+    // Check email availability once more before submitting
+    const isEmailAvailable = await checkEmailAvailability(email);
+    if (!isEmailAvailable) {
+      toast.error("Este e-mail já está em uso.", { duration: 3000 });
+      setEmailError("Este e-mail já está em uso.");
+      setFormErrors(prev => ({...prev, email: true}));
+      return;
     }
     
     if (password !== confirmPassword) {
@@ -306,15 +369,18 @@ const SignUp = () => {
                 type="email"
                 placeholder="Digite seu melhor e-mail"
                 value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setFormErrors(prev => ({...prev, email: false}));
-                }}
+                onChange={handleEmailChange}
                 required
-                className={getInputClassName("email")}
+                className={`bg-black border-gray-700 text-white placeholder:text-gray-500 ${(formErrors.email || emailError) ? 'border-red-500' : ''}`}
               />
-              {formErrors.email && (
+              {emailError && (
+                <p className="text-red-500 text-xs mt-1">{emailError}</p>
+              )}
+              {formErrors.email && !emailError && (
                 <p className="text-red-500 text-xs mt-1">E-mail é obrigatório</p>
+              )}
+              {checkingEmail && (
+                <p className="text-gray-400 text-xs mt-1">Verificando disponibilidade...</p>
               )}
             </div>
 
@@ -465,7 +531,7 @@ const SignUp = () => {
                 backgroundColor: config?.login_button_color || '#CB5EEE', 
                 color: config?.login_button_text_color || '#FFFFFF'
               }}
-              disabled={loading || !!usernameError || checkingUsername}
+              disabled={loading || !!usernameError || checkingUsername || !!emailError || checkingEmail}
             >
               {loading ? "Criando conta..." : "Criar Conta"}
             </Button>
