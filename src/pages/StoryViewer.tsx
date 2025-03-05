@@ -15,6 +15,7 @@ interface Story {
   media_type: "image" | "video";
   created_at: string;
   expires_at: string;
+  comments_enabled?: boolean;
   user?: {
     username: string;
     avatar_url: string;
@@ -320,6 +321,12 @@ const StoryViewer = () => {
       toast.error("Erro ao excluir história");
     },
   });
+
+  const isCommentingAllowed = () => {
+    if (!stories || stories.length === 0 || currentStoryIndex >= stories.length) return false;
+    
+    return stories[currentStoryIndex].comments_enabled !== false;
+  };
 
   useEffect(() => {
     if (isLoading || !stories || stories.length === 0) return;
@@ -726,7 +733,11 @@ const StoryViewer = () => {
           <h3 className="text-white font-semibold mb-4">Comentários</h3>
           
           <div className="flex-1 overflow-y-auto">
-            {isLoadingComments ? (
+            {!isCommentingAllowed() ? (
+              <div className="text-center text-gray-400 py-8">
+                Comentários desativados para este story
+              </div>
+            ) : isLoadingComments ? (
               <div className="flex justify-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
               </div>
@@ -771,66 +782,76 @@ const StoryViewer = () => {
             )}
           </div>
           
-          <form onSubmit={handleAddComment} className="mt-4 flex items-center gap-2">
-            <Avatar className="h-8 w-8 shrink-0">
-              {currentUser && (
-                <>
-                  <AvatarImage 
-                    src={currentUser.user_metadata?.avatar_url || undefined} 
-                    alt={currentUser.user_metadata?.full_name || "Você"} 
-                  />
-                  <AvatarFallback>
-                    {currentUser.user_metadata?.full_name?.charAt(0).toUpperCase() || "V"}
-                  </AvatarFallback>
-                </>
-              )}
-            </Avatar>
-            <Input
-              ref={commentInputRef}
-              type="text"
-              placeholder="Adicione um comentário..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 bg-gray-900 border-none text-white rounded-full placeholder:text-gray-400"
-            />
-            <Button 
-              type="submit" 
-              size="icon" 
-              variant="ghost" 
-              className="text-white"
-              disabled={!commentText.trim()}
-            >
-              <Send className="h-5 w-5" />
-            </Button>
-          </form>
+          {isCommentingAllowed() && (
+            <form onSubmit={handleAddComment} className="mt-4 flex items-center gap-2">
+              <Avatar className="h-8 w-8 shrink-0">
+                {currentUser && (
+                  <>
+                    <AvatarImage 
+                      src={currentUser.user_metadata?.avatar_url || undefined} 
+                      alt={currentUser.user_metadata?.full_name || "Você"} 
+                    />
+                    <AvatarFallback>
+                      {currentUser.user_metadata?.full_name?.charAt(0).toUpperCase() || "V"}
+                    </AvatarFallback>
+                  </>
+                )}
+              </Avatar>
+              <Input
+                ref={commentInputRef}
+                type="text"
+                placeholder="Adicione um comentário..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="flex-1 bg-gray-900 border-none text-white rounded-full placeholder:text-gray-400"
+              />
+              <Button 
+                type="submit" 
+                size="icon" 
+                variant="ghost" 
+                className="text-white"
+                disabled={!commentText.trim()}
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </form>
+          )}
         </div>
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-black story-comment-bar">
         <div className="px-4 py-3 flex items-center">
-          <button 
-            className="flex items-center justify-center mr-4"
-            onClick={toggleComments}
-          >
-            <img 
-              src="/comentario.png" 
-              alt="Comentar" 
-              className="h-7 w-7"
-            />
-          </button>
-          
-          <div className="flex-1">
-            <form onSubmit={handleAddComment} className="flex items-center">
-              <Input
-                type="text"
-                placeholder="Enviar mensagem"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                className="bg-gray-900 border-0 text-white rounded-full placeholder:text-gray-400"
-                onClick={() => setShowComments(true)}
-              />
-            </form>
-          </div>
+          {isCommentingAllowed() ? (
+            <>
+              <button 
+                className="flex items-center justify-center mr-4"
+                onClick={toggleComments}
+              >
+                <img 
+                  src="/comentario.png" 
+                  alt="Comentar" 
+                  className="h-7 w-7"
+                />
+              </button>
+              
+              <div className="flex-1">
+                <form onSubmit={handleAddComment} className="flex items-center">
+                  <Input
+                    type="text"
+                    placeholder="Enviar mensagem"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    className="bg-gray-900 border-0 text-white rounded-full placeholder:text-gray-400"
+                    onClick={() => setShowComments(true)}
+                  />
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 px-4 py-1">
+              <p className="text-gray-400 text-sm">Comentários desativados</p>
+            </div>
+          )}
           
           <button 
             className="flex items-center justify-center ml-4"

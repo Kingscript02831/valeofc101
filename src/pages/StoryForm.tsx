@@ -8,10 +8,11 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Video, Trash2, Image } from "lucide-react";
+import { ArrowLeft, Camera, Video, Trash2, Image, MessageSquare } from "lucide-react";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { transformDropboxUrl } from "../utils/mediaUtils";
+import { Switch } from "../components/ui/switch";
 
 interface StoryFormState {
   type: "image" | "video";
@@ -28,6 +29,7 @@ const StoryForm = () => {
   const [mediaUrl, setMediaUrl] = useState<string>(formState?.url || "");
   const [isLoading, setIsLoading] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
 
   useEffect(() => {
     // If there's no state data, redirect to the creator
@@ -47,7 +49,8 @@ const StoryForm = () => {
       const payload = {
         user_id: user.id,
         media_url: transformedMediaUrl,
-        media_type: storyType
+        media_type: storyType,
+        comments_enabled: commentsEnabled
       };
 
       const { data, error } = await supabase
@@ -142,6 +145,24 @@ const StoryForm = () => {
                   URL da {storyType === "image" ? "imagem" : "vídeo"} do seu story
                 </p>
               </div>
+              
+              {/* Opção para ativar/desativar comentários */}
+              <div className="flex items-center justify-between space-y-0 pt-2">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <Label htmlFor="comments-toggle" className="text-sm font-medium text-white">
+                    Permitir comentários
+                  </Label>
+                </div>
+                <Switch
+                  id="comments-toggle"
+                  checked={commentsEnabled}
+                  onCheckedChange={setCommentsEnabled}
+                />
+              </div>
+              <p className="text-xs text-gray-400 pt-1">
+                {commentsEnabled ? "Os usuários poderão comentar no seu story" : "Os comentários estão desativados para este story"}
+              </p>
 
               {/* Botões de ação */}
               <div className="pt-4">
