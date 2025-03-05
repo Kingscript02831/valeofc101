@@ -8,9 +8,10 @@ import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Link as LinkIcon, Save, Image, Video } from "lucide-react";
+import { ArrowLeft, Save, Image, Video } from "lucide-react";
 import { MediaCarousel } from "../components/MediaCarousel";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
+import { transformDropboxUrl } from "../utils/mediaUtils";
 
 interface StoryData {
   id: string;
@@ -19,7 +20,6 @@ interface StoryData {
   media_type: "image" | "video" | "text";
   created_at: string;
   expires_at: string;
-  link_url?: string | null;
 }
 
 const StoryEdit = () => {
@@ -27,7 +27,6 @@ const StoryEdit = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  const [linkUrl, setLinkUrl] = useState<string>("");
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [mediaType, setMediaType] = useState<"image" | "video" | "text">("image");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,9 +52,6 @@ const StoryEdit = () => {
   // Initialize form with existing data when story data is loaded
   useEffect(() => {
     if (story) {
-      if (story.link_url) {
-        setLinkUrl(story.link_url);
-      }
       if (story.media_url) {
         setMediaUrl(story.media_url);
       }
@@ -70,12 +66,14 @@ const StoryEdit = () => {
     mutationFn: async () => {
       if (!id) throw new Error("ID da história não encontrado");
 
+      // Transform Dropbox URL if needed
+      const finalMediaUrl = transformDropboxUrl(mediaUrl);
+
       // Fields to update - make sure this matches the database schema
       const { data, error } = await supabase
         .from("stories")
         .update({
-          link_url: linkUrl || null,
-          media_url: mediaUrl
+          media_url: finalMediaUrl
         })
         .eq("id", id)
         .select();
@@ -107,7 +105,9 @@ const StoryEdit = () => {
   };
 
   const handleMediaUpdate = (newUrl: string) => {
-    setMediaUrl(newUrl);
+    // Transform Dropbox URL if needed
+    const transformedUrl = transformDropboxUrl(newUrl);
+    setMediaUrl(transformedUrl);
   };
 
   if (isStoryLoading) {
@@ -182,24 +182,6 @@ const StoryEdit = () => {
                 </div>
                 <p className="text-xs text-gray-400">
                   Altere a URL da {mediaType === "image" ? "imagem" : "vídeo"} do seu story
-                </p>
-              </div>
-
-              {/* Campo para adicionar link */}
-              <div className="space-y-2">
-                <Label htmlFor="link" className="text-white flex items-center gap-2">
-                  <LinkIcon size={16} />
-                  Adicionar Link
-                </Label>
-                <Input
-                  id="link"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://exemplo.com"
-                  className="bg-gray-900 border-gray-700 text-white"
-                />
-                <p className="text-xs text-gray-400">
-                  Adicione um link para direcionar os visualizadores
                 </p>
               </div>
 

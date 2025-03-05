@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
@@ -19,11 +18,9 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
   const navigate = useNavigate();
   const [hasUnviewedStories, setHasUnviewedStories] = useState(false);
 
-  // Check if user has unviewed stories
   const { data: storiesData } = useQuery({
     queryKey: ["userStories", userId],
     queryFn: async () => {
-      // Get all non-expired stories from the user
       const { data: stories, error } = await supabase
         .from("stories")
         .select("id")
@@ -34,18 +31,15 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
       
       if (!stories || stories.length === 0) {
         setHasUnviewedStories(false);
-        // Notificar componente pai que não há stories, se necessário
         if (onNoStories) onNoStories();
         return { hasStories: propHasStories || false, stories: [] };
       }
       
-      // If it's the current user, no need to check views
       if (isCurrentUser) {
         setHasUnviewedStories(true);
         return { hasStories: true, stories };
       }
       
-      // For other users, check if there are any unviewed stories
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) return { hasStories: propHasStories || false, stories: [] };
       
@@ -59,7 +53,6 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
         
       if (viewsError) throw viewsError;
       
-      // If number of views is less than number of stories, there are unviewed stories
       const hasUnviewed = views ? stories.length > views.length : true;
       setHasUnviewedStories(hasUnviewed);
       
@@ -69,20 +62,17 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
         stories 
       };
     },
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: 60000,
   });
 
   const handleClick = () => {
     if (isCurrentUser) {
-      // Modificação para visualizar os próprios stories ao invés de adicionar
       navigate(`/story/manage`);
     } else if (storiesData?.hasStories) {
-      // View user's stories
       navigate(`/story/view/${userId}`);
     }
   };
 
-  // Display name truncation 
   const displayName = isCurrentUser ? "Seu story" : 
     username.length > 9 ? username.substring(0, 8) + '...' : username;
 
@@ -92,7 +82,6 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
         className="relative w-[62px] h-[62px] flex items-center justify-center cursor-pointer"
         onClick={handleClick}
       >
-        {/* Gradient circle for unviewed stories - Instagram style gradient */}
         {storiesData?.hasStories && hasUnviewedStories ? (
           <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-yellow-500 via-orange-500 via-red-500 via-purple-500 to-blue-500"></div>
         ) : storiesData?.hasStories ? (
@@ -101,10 +90,8 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
           <div className="absolute inset-0 rounded-full bg-gray-200 dark:bg-gray-800"></div>
         )}
 
-        {/* White inner circle - smaller gap for Instagram look */}
         <div className="absolute inset-[2px] bg-white dark:bg-black rounded-full"></div>
 
-        {/* User avatar */}
         <Avatar className="h-[56px] w-[56px] relative">
           {avatarUrl ? (
             <AvatarImage src={avatarUrl} alt={username} className="object-cover" />
@@ -115,7 +102,6 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
           )}
         </Avatar>
 
-        {/* "+" button for current user - Instagram style */}
         {isCurrentUser && (
           <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full border-2 border-white dark:border-black w-4 h-4 flex items-center justify-center">
             <Plus className="h-2 w-2 text-white" />
@@ -123,7 +109,6 @@ const StoryCircle = ({ userId, username, avatarUrl, isCurrentUser = false, hasSt
         )}
       </div>
 
-      {/* Username below - smaller text for Instagram look */}
       <span className="mt-1 text-[11px] text-center truncate w-full">
         {displayName}
       </span>

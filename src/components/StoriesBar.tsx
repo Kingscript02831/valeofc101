@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -11,13 +10,12 @@ interface FollowingProfile {
   username: string;
   avatar_url: string;
   has_active_stories: boolean;
-  has_viewed_stories: boolean; // New property to track if user has viewed the stories
+  has_viewed_stories: boolean;
 }
 
 const StoriesBar = () => {
   const navigate = useNavigate();
 
-  // Busca o usuário atual
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
@@ -34,13 +32,11 @@ const StoriesBar = () => {
     },
   });
 
-  // Busca perfis que o usuário está seguindo e que têm stories ativos
   const { data: followingWithStories, isLoading } = useQuery({
     queryKey: ["followingWithStories", currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return [];
 
-      // Busca quem o usuário atual segue
       const { data: following, error: followingError } = await supabase
         .from("follows")
         .select("following_id")
@@ -52,7 +48,6 @@ const StoriesBar = () => {
       
       const followingIds = following.map(f => f.following_id);
       
-      // Busca perfis das pessoas que o usuário segue
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, username, avatar_url")
@@ -62,9 +57,7 @@ const StoriesBar = () => {
       
       if (!profiles || profiles.length === 0) return [];
       
-      // Para cada perfil, verifica se tem stories ativos e se o usuário já os viu
       const profilesWithStoryStatus = await Promise.all(profiles.map(async (profile) => {
-        // Check for active stories
         const { data: stories, error: storiesError } = await supabase
           .from("stories")
           .select("id")
@@ -73,7 +66,6 @@ const StoriesBar = () => {
           
         if (storiesError) throw storiesError;
         
-        // If there are no active stories, don't include this profile
         if (!stories || stories.length === 0) {
           return {
             ...profile,
@@ -82,7 +74,6 @@ const StoriesBar = () => {
           };
         }
         
-        // Check if user has viewed all stories
         const storyIds = stories.map(s => s.id);
         
         const { data: views, error: viewsError } = await supabase
@@ -93,7 +84,6 @@ const StoriesBar = () => {
           
         if (viewsError) throw viewsError;
         
-        // User has viewed all stories if the number of views equals the number of stories
         const hasViewedAll = views && views.length === stories.length;
         
         return {
@@ -103,8 +93,6 @@ const StoriesBar = () => {
         };
       }));
       
-      // Filter out profiles with no active stories and sort by viewed status
-      // (unviewed stories first, then viewed stories)
       return profilesWithStoryStatus
         .filter(profile => profile.has_active_stories)
         .sort((a, b) => {
@@ -117,22 +105,17 @@ const StoriesBar = () => {
   });
 
   const handleStoryClick = (userId: string) => {
-    // Se for o usuário atual, vai para gerenciar stories
     if (userId === currentUser?.id) {
       navigate("/story/manage");
     } else {
-      // Se for outro usuário, vai para visualizar os stories dele
       navigate(`/story/view/${userId}`);
     }
   };
 
-  // Sempre mostrar a barra de stories, mesmo que não haja stories para exibir
-  // Removemos a condição que fazia a barra desaparecer
   return (
     <div className="bg-black w-full py-4">
       <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex space-x-4 px-4">
-          {/* Círculo do usuário atual com botão de adicionar - sempre mostrado */}
+        <div className="grid grid-cols-2 gap-4 px-4">
           {currentUser && (
             <div 
               className="flex flex-col items-center cursor-pointer"
@@ -154,7 +137,6 @@ const StoriesBar = () => {
             </div>
           )}
 
-          {/* Círculos de outros usuários com stories */}
           {followingWithStories?.map((profile) => (
             <div 
               key={profile.id}
@@ -163,8 +145,8 @@ const StoriesBar = () => {
             >
               <Avatar 
                 className={`w-16 h-16 ${profile.has_viewed_stories 
-                  ? 'border-2 border-gray-500' // Gray border for viewed stories
-                  : 'border-2 border-pink-500' // Pink border for unviewed stories
+                  ? 'border-2 border-gray-500'
+                  : 'border-2 border-pink-500'
                 }`}
               >
                 {profile.avatar_url ? (
@@ -177,10 +159,9 @@ const StoriesBar = () => {
             </div>
           ))}
 
-          {/* Exibe placeholders apenas durante o carregamento */}
           {isLoading && (
             <>
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="flex flex-col items-center">
                   <div className="w-16 h-16 rounded-full bg-gray-700 animate-pulse"></div>
                   <div className="w-12 h-2 mt-1 bg-gray-700 animate-pulse rounded"></div>
@@ -189,9 +170,8 @@ const StoriesBar = () => {
             </>
           )}
           
-          {/* Quando não há stories e não está carregando, mostra uma mensagem ou um visual alternativo */}
           {!isLoading && (!followingWithStories || followingWithStories.length === 0) && !currentUser && (
-            <div className="flex items-center justify-center w-full py-2">
+            <div className="flex items-center justify-center w-full col-span-2 py-2">
               <p className="text-xs text-gray-400">Entre para ver stories</p>
             </div>
           )}
