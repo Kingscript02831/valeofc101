@@ -58,107 +58,101 @@ const Login = () => {
     );
   }
 
-  // URL de fundo padrão caso não haja configuração
-  const backgroundImage = config.login_background_image || 'https://images.unsplash.com/photo-1470813740244-df37b8c1edcb';
-  
   return (
     <div 
-      className="min-h-screen flex"
+      className="min-h-screen flex items-center justify-center p-6"
       style={{ 
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        background: `linear-gradient(to right, ${config.navbar_color}, ${config.primary_color})`
       }}
     >
-      <div className="w-full md:w-1/2 lg:w-2/5 xl:w-1/3 flex flex-col p-8 justify-center">
-        <div className="space-y-6">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-xl border border-white/10">
+        <div className="text-center space-y-3">
           <h1 
             className="text-3xl font-bold"
-            style={{ color: config.login_text_color || '#FFFFFF' }}
+            style={{ color: config.login_text_color }}
           >
-            Faça seu Login.
+            Conecte-se
           </h1>
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-1.5">
-              <label 
-                htmlFor="email" 
-                className="text-sm font-medium block"
-                style={{ color: config.login_text_color || '#FFFFFF' }}
-              >
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-black/20 border-gray-600 text-white backdrop-blur-sm"
-                style={{ color: config.login_text_color || '#FFFFFF' }}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label 
-                htmlFor="password" 
-                className="text-sm font-medium block"
-                style={{ color: config.login_text_color || '#FFFFFF' }}
-              >
-                Senha
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-black/20 border-gray-600 text-white backdrop-blur-sm"
-                style={{ color: config.login_text_color || '#FFFFFF' }}
-              />
-            </div>
-
-            <Button
-              type="button"
-              variant="link"
-              onClick={() => navigate("/reset-password")}
-              className="p-0 text-xs"
-              style={{ color: config.login_text_color || '#FFFFFF' }}
-            >
-              Esqueci minha senha
-            </Button>
-
-            <Button
-              type="submit"
-              className="w-full h-11 font-medium rounded-lg transition duration-300"
-              style={{ 
-                background: config.login_button_color || 'linear-gradient(90deg, #9b87f5, #7C3AED)',
-                color: config.login_button_text_color || 'white',
-                border: 'none'
-              }}
-              disabled={loading}
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-
-            <div className="text-center">
-              <Button
-                variant="link"
-                className="text-sm transition hover:underline"
-                onClick={() => navigate("/signup")}
-                style={{ color: config.login_text_color || '#FFFFFF' }}
-              >
-                Ainda não tenho uma conta
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        <div className="mt-auto text-center">
-          <p className="text-xs" style={{ color: config.login_text_color || '#FFFFFF' }}>
-            {config.login_footer_text || `${new Date().getFullYear()} | Desenvolvido por Leonardo Diman`}
+          <p style={{ color: config.login_text_color }}>
+            Entre com suas credenciais para acessar
           </p>
         </div>
+
+        <form onSubmit={handleLogin} className="space-y-6 mt-6">
+          <div>
+            <label 
+              htmlFor="email" 
+              className="text-sm font-medium block mb-1"
+              style={{ color: config.login_text_color }}
+            >
+              Email
+            </label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-white/50 border-gray-200"
+              style={{ color: config.login_text_color }}
+            />
+          </div>
+
+          <div>
+            <label 
+              htmlFor="password" 
+              className="text-sm font-medium block mb-1"
+              style={{ color: config.login_text_color }}
+            >
+              Senha
+            </label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="******"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-white/50 border-gray-200"
+              style={{ color: config.login_text_color }}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-12 font-medium rounded-lg transition duration-300 shadow-md text-white"
+            style={{ 
+              background: config.primary_color,
+              borderColor: config.primary_color
+            }}
+            disabled={loading}
+          >
+            {loading ? "Entrando..." : "Entrar"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="link"
+            onClick={() => navigate("/reset-password")}
+            className="w-full mt-2 font-medium"
+            style={{ color: config.login_text_color }}
+          >
+            Esqueceu sua senha?
+          </Button>
+
+          <p className="text-center text-sm" style={{ color: config.login_text_color }}>
+            Não possui uma conta?{" "}
+            <Button
+              variant="link"
+              className="p-0 transition"
+              onClick={() => navigate("/signup")}
+              style={{ color: config.primary_color }}
+            >
+              Criar conta
+            </Button>
+          </p>
+        </form>
       </div>
     </div>
   );
