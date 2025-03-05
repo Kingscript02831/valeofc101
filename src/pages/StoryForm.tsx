@@ -37,14 +37,30 @@ const StoryForm = () => {
     }
   }, [formState, navigate]);
 
+  // Função para transformar URLs do Dropbox, mudando 0 para 1 no final
+  const transformDropboxUrl = (url: string): string => {
+    if (!url) return url;
+    
+    // Verifica se é uma URL do Dropbox
+    if (url.includes('dropbox.com') && url.endsWith('0')) {
+      // Substitui o 0 final por 1
+      return url.slice(0, -1) + '1';
+    }
+    
+    return url;
+  };
+
   const createStoryMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Você precisa estar autenticado");
 
+      // Transforma a URL antes de salvar
+      const transformedMediaUrl = transformDropboxUrl(mediaUrl);
+
       const payload = {
         user_id: user.id,
-        media_url: mediaUrl,
+        media_url: transformedMediaUrl,
         media_type: storyType,
         link_url: linkUrl || null
       };
@@ -70,8 +86,10 @@ const StoryForm = () => {
   });
 
   const handleMediaAdd = (url: string, type: "image" | "video") => {
+    // Transforma a URL do Dropbox no momento de adicionar
+    const transformedUrl = transformDropboxUrl(url);
     setStoryType(type);
-    setMediaUrl(url);
+    setMediaUrl(transformedUrl);
   };
 
   const handleSubmit = async () => {
