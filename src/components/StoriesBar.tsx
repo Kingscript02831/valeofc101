@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
@@ -124,6 +125,44 @@ const StoriesBar = () => {
     touchStartXRef.current = null;
   };
 
+  // Handler for when user clicks on their own story avatar
+  const handleOwnStoryClick = () => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+    
+    // First check if the user has stories
+    supabase
+      .from("stories")
+      .select("*")
+      .eq("user_id", currentUser.id)
+      .then(({ data: stories, error }) => {
+        if (error) {
+          console.error("Error fetching user stories:", error);
+          return;
+        }
+        
+        if (stories && stories.length > 0) {
+          // If user has stories, navigate to view them
+          const transformedStories = stories.map(story => ({
+            ...story,
+            media_url: transformDropboxUrl(story.media_url)
+          }));
+          navigate(`/story/${currentUser.id}`, { state: { stories: transformedStories } });
+        } else {
+          // If no stories, do nothing or show a message
+          console.log("You don't have any active stories.");
+        }
+      });
+  };
+
+  // Handler for when user clicks on the plus icon
+  const handleCreateStoryClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the parent click
+    navigate("/story/creator");
+  };
+
   return (
     <div className="bg-black w-full py-4 relative">
       <div 
@@ -138,16 +177,24 @@ const StoriesBar = () => {
           {currentUser && (
             <div 
               className="flex flex-col items-center cursor-pointer min-w-16"
-              onClick={() => handleStoryClick(currentUser.id)}
+              onClick={handleOwnStoryClick}
             >
               <div className="relative">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-yellow-500 to-pink-500 flex items-center justify-center">
                   <Avatar className="w-14 h-14 border-2 border-black">
                     <AvatarImage src="/placeholder.svg" alt={currentUser.id} />
                     <AvatarFallback>
-                      <Plus className="h-6 w-6" />
+                      {currentUser.id?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
+                  
+                  {/* Plus icon that navigates to story creator */}
+                  <div 
+                    className="absolute bottom-0 right-0 bg-blue-500 rounded-full border-2 border-black w-6 h-6 flex items-center justify-center cursor-pointer"
+                    onClick={handleCreateStoryClick}
+                  >
+                    <Plus className="h-4 w-4 text-white" />
+                  </div>
                 </div>
               </div>
               <span className="text-white text-xs mt-1 truncate w-16 text-center">Seu story</span>
