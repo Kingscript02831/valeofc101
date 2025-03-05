@@ -4,9 +4,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { Card, CardContent } from "../components/ui/card";
+import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Video, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Video, Trash2, Link } from "lucide-react";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 import { MediaCarousel } from "../components/MediaCarousel";
 
@@ -23,6 +25,7 @@ const StoryForm = () => {
   
   const [storyType, setStoryType] = useState<"image" | "video">(formState?.type || "image");
   const [mediaUrl, setMediaUrl] = useState<string>(formState?.url || "");
+  const [linkUrl, setLinkUrl] = useState<string>("");
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -59,7 +62,7 @@ const StoryForm = () => {
         user_id: user.id,
         media_url: transformedMediaUrl,
         media_type: storyType,
-        link_url: null // Removido o linkUrl conforme solicitado
+        link_url: linkUrl || null
       };
 
       const { data, error } = await supabase
@@ -157,6 +160,29 @@ const StoryForm = () => {
                       Vídeo
                     </Button>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Campos adicionais para link */}
+            {mediaUrl && (
+              <div className="space-y-4 mb-4">
+                {/* Campo para adicionar link */}
+                <div className="space-y-2">
+                  <Label htmlFor="link" className="text-white flex items-center gap-2">
+                    <Link size={16} />
+                    Adicionar Link
+                  </Label>
+                  <Input
+                    id="link"
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    placeholder="https://exemplo.com"
+                    className="bg-gray-900 border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-400">
+                    Adicione um link para direcionar os visualizadores
+                  </p>
                 </div>
               </div>
             )}
