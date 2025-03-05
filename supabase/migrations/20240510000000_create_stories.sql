@@ -4,7 +4,7 @@ create table if not exists public.stories (
   id uuid default uuid_generate_v4() primary key,
   user_id uuid references public.profiles(id) on delete cascade not null,
   media_url text not null,
-  media_type text not null check (media_type in ('image', 'video')),
+  media_type text not null check (media_type in ('image', 'video', 'text')),
   created_at timestamp with time zone default now() not null,
   expires_at timestamp with time zone default (now() + interval '24 hours') not null
 );

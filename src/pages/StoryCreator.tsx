@@ -3,21 +3,20 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Pen, Music, Camera, Trash2, Edit } from "lucide-react";
+import { X, Music, Camera, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../integrations/supabase/client";
 import PhotoUrlDialog from "../components/PhotoUrlDialog";
 
 interface GalleryItem {
   id: string;
-  type: "image" | "video";
+  type: "image" | "video" | "text";
   url: string;
   created_at: string;
 }
 
 const StoryCreator = () => {
   const navigate = useNavigate();
-  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -44,7 +43,15 @@ const StoryCreator = () => {
         
       if (error) throw error;
       
-      setGalleryItems(data || []);
+      // Convert the data to match the GalleryItem interface
+      const mappedData = (data || []).map(item => ({
+        id: item.id,
+        type: item.media_type as "image" | "video" | "text",
+        url: item.media_url,
+        created_at: item.created_at
+      }));
+      
+      setGalleryItems(mappedData);
     } catch (error) {
       console.error("Error fetching media:", error);
       toast.error("Erro ao carregar sua galeria");
@@ -78,6 +85,23 @@ const StoryCreator = () => {
     navigate("/story/edit/" + item.id);
   };
   
+  // Function to render text content from JSON
+  const renderTextContent = (jsonString: string) => {
+    try {
+      const textData = JSON.parse(jsonString);
+      return (
+        <span style={{ 
+          color: textData.color || '#FFFFFF',
+          fontSize: '12px'
+        }}>
+          {textData.text}
+        </span>
+      );
+    } catch (e) {
+      return <span>Texto</span>;
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -91,20 +115,7 @@ const StoryCreator = () => {
 
       {/* Content - Story Creation Options */}
       <div className="p-4">
-        <div className="grid grid-cols-3 gap-4">
-          {/* Text Story Option */}
-          <div 
-            className="cursor-pointer rounded-xl overflow-hidden"
-            onClick={() => setIsTextDialogOpen(true)}
-          >
-            <div className="bg-gradient-to-br from-pink-600 to-purple-600 p-6 flex flex-col items-center justify-center aspect-square">
-              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                <Pen className="h-8 w-8 text-gray-800" />
-              </div>
-              <span className="text-white text-xl font-semibold">Texto</span>
-            </div>
-          </div>
-          
+        <div className="grid grid-cols-2 gap-4">
           {/* Image Story Option */}
           <div 
             className="cursor-pointer rounded-xl overflow-hidden"
@@ -127,7 +138,7 @@ const StoryCreator = () => {
               <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mb-4">
                 <Camera className="h-8 w-8 text-gray-800" />
               </div>
-              <span className="text-white text-xl font-semibold">Câmera</span>
+              <span className="text-white text-xl font-semibold">Vídeo</span>
             </div>
           </div>
         </div>
@@ -157,7 +168,11 @@ const StoryCreator = () => {
             <div className="grid grid-cols-3 gap-0.5">
               {galleryItems.map((item) => (
                 <div key={item.id} className="relative aspect-square bg-gray-800">
-                  {item.type === 'video' ? (
+                  {item.type === 'text' ? (
+                    <div className="h-full w-full flex items-center justify-center bg-gray-900 text-white p-2 text-center overflow-hidden">
+                      {renderTextContent(item.url)}
+                    </div>
+                  ) : item.type === 'video' ? (
                     <video 
                       src={item.url}
                       className="object-cover w-full h-full"
@@ -202,18 +217,6 @@ const StoryCreator = () => {
           )}
         </div>
       </div>
-      
-      {/* Dialog for adding text story */}
-      <PhotoUrlDialog
-        isOpen={isTextDialogOpen}
-        onClose={() => setIsTextDialogOpen(false)}
-        onConfirm={(url) => {
-          navigate("/story/new", { state: { type: "text", content: url } });
-        }}
-        title="Criar Story de Texto"
-        placeholder="Digite seu texto aqui..."
-        textInputOnly={true}
-      />
       
       {/* Dialog for adding image */}
       <PhotoUrlDialog
